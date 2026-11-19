@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102f3d">
+  <meta name="description" content="ניהול פועלים ביומית: פרטי פועל, תמונה, חברת כוח אדם ושיבוץ למיקום עבודה בכל תאריך.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ניהול יומיות">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>ניהול יומיות | ניהול פועלים</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none"><path d="M9 30v-3a15 15 0 0 1 9-13.7V10h12v3.3A15 15 0 0 1 39 27v3H9Z" fill="#F8BE68"/><path d="M6 30h36a3 3 0 0 1 0 6H6a3 3 0 0 1 0-6Z" fill="#fff"/><path d="M20 11v12m8-12v12" stroke="#133B49" stroke-width="3" stroke-linecap="round"/></svg>
+          </div>
+          <div><strong>ניהול יומיות</strong><span>פועלים • חברות כוח אדם • שיבוצים</span></div>
+        </div>
+        <div class="header-tools"><span class="offline-indicator" id="offline-indicator" title="מצב רשת"></span><button class="icon-button header-help" id="help-button" type="button" aria-label="עזרה" title="עזרה">?</button></div>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="ניווט ראשי">
+      <button type="button" class="tab active" data-tab="daily" aria-current="page"><span class="tab-icon">▦</span> שיבוץ יומי</button>
+      <button type="button" class="tab" data-tab="workers"><span class="tab-icon">♙</span> פועלים</button>
+      <button type="button" class="tab" data-tab="reports"><span class="tab-icon">▤</span> דוחות וגיבוי</button>
+    </nav>
+
+    <main class="main-content">
+      <section class="panel active" id="panel-daily" aria-labelledby="daily-heading">
+        <div class="section-heading">
+          <div><p class="eyebrow">יומן העבודה</p><h1 id="daily-heading">איפה כולם עובדים היום?</h1><p class="section-subtitle">שיבוץ בבוקר, ותיעוד כמה מיקומים ומלאכות שבוצעו בסוף היום.</p></div>
+        </div>
+        <div class="date-control card-lite">
+          <button type="button" id="previous-day" class="day-arrow" aria-label="יום קודם" title="יום קודם">›</button>
+          <div class="date-center"><span>תאריך השיבוץ</span><input id="daily-date" type="date" aria-label="תאריך השיבוץ"><button id="go-today" class="text-action" type="button">היום</button></div>
+          <button type="button" id="next-day" class="day-arrow" aria-label="יום הבא" title="יום הבא">‹</button>
+        </div>
+        <div class="stats-grid" id="daily-stats" aria-live="polite"></div>
+        <div class="actions-bar"><button id="new-assignment" class="button button-primary" type="button"><span>＋</span> שיבוץ פועל</button><button id="copy-previous" class="button button-quiet" type="button">העתק מיקומים מאתמול</button></div>
+        <div class="search-row"><label class="search-field"><span aria-hidden="true">⌕</span><input type="search" id="daily-search" placeholder="חיפוש פועל, מיקום או מלאכה..." aria-label="חיפוש שיבוצים"></label><select id="daily-company-filter" aria-label="סינון לפי חברה"><option value="">כל החברות</option></select></div>
+        <div id="daily-list" class="items-list"></div>
+      </section>
+
+      <section class="panel" id="panel-workers" aria-labelledby="workers-heading">
+        <div class="section-heading spread">
+          <div><p class="eyebrow">מאגר עובדים</p><h1 id="workers-heading">הפועלים שלי</h1><p class="section-subtitle">הכנס כל פועל פעם אחת. אחר כך אפשר לרשום את עבודותיו בכל תאריך.</p></div>
+          <button type="button" id="new-worker" class="button button-primary">＋ הוסף פועל</button>
+        </div>
+        <div class="search-row"><label class="search-field"><span aria-hidden="true">⌕</span><input type="search" id="worker-search" placeholder="חיפוש לפי שם או חברת כוח אדם..." aria-label="חיפוש פועלים"></label><select id="workers-status-filter" aria-label="סינון פועלים"><option value="active">פועלים פעילים</option><option value="all">כל הפועלים</option><option value="archived">לא פעילים</option></select></div>
+        <div id="workers-summary" class="context-label"></div>
+        <div id="workers-list" class="workers-grid"></div>
+      </section>
+
+      <section class="panel" id="panel-reports" aria-labelledby="reports-heading">
+        <div class="section-heading"><div><p class="eyebrow">סיכומים ונתונים</p><h1 id="reports-heading">דוחות וגיבוי</h1><p class="section-subtitle">ימי עבודה, מיקומים ומלאכות שבוצעו בתקופה שתבחר.</p></div></div>
+        <div class="report-filters card-lite"><label>מתאריך<input type="date" id="report-from"></label><label>עד תאריך<input type="date" id="report-to"></label><label>חברת כוח אדם<select id="report-company"><option value="">כל החברות</option></select></label><button type="button" class="button button-primary" id="generate-report">הצג דוח</button></div>
+        <div id="report-result" class="report-result"></div>
+        <div class="tools-card"><div><h2>ייצוא ושמירת נתונים</h2><p>אפשר לשמור דוח Excel בפורמט CSV, או גיבוי מלא הכולל תמונות ונתוני שיבוץ.</p></div><div class="tool-buttons"><button id="export-csv" class="button button-quiet" type="button">ייצוא CSV לאקסל</button><button id="export-backup" class="button button-quiet" type="button">הורדת גיבוי מלא</button><button id="import-backup" class="button button-outline" type="button">שחזור מגיבוי</button><input id="backup-file" type="file" accept=".json,application/json" hidden></div></div>
+        <div class="note"><strong>חשוב לדעת:</strong> המידע נשמר במכשיר ובדפדפן שבו אתה משתמש, ולא מסתנכרן בין טלפונים. מומלץ להוריד גיבוי באופן תקופתי. מחיקת נתוני הדפדפן עלולה למחוק את המידע.</div>
+      </section>
+    </main>
+    <footer>כל השיבוצים במקום אחד <span class="dot-sep">•</span> Mordi Ben Aderet</footer>
+  </div>
+
+  <dialog id="worker-dialog" class="app-dialog" aria-labelledby="worker-dialog-title">
+    <form id="worker-form" class="dialog-content">
+      <div class="dialog-top"><div><p class="eyebrow">כרטיס עובד</p><h2 id="worker-dialog-title">הוספת פועל</h2></div><button type="button" class="close-button" data-close="worker-dialog" aria-label="סגירה">×</button></div>
+      <div class="photo-control"><div class="photo-preview" id="worker-photo-preview" aria-label="תמונה של הפועל">👷</div><div><label for="worker-photo" class="button button-outline photo-picker">בחירת תמונה</label><input type="file" id="worker-photo" accept="image/*" hidden><button class="text-action photo-remove" type="button" id="remove-worker-photo">הסר תמונה</button><small>התמונה תישמר בכרטיס הפועל.</small></div></div>
+      <label class="form-field">שם הפועל <span class="required">*</span><input name="name" id="worker-name" autocomplete="off" required maxlength="100" placeholder="למשל: ראמש קומאר"></label>
+      <label class="form-field">חברת כוח אדם <span class="required">*</span><input name="company" id="worker-company" list="company-options" autocomplete="off" required maxlength="100" placeholder="שם החברה"></label>
+      <datalist id="company-options"></datalist>
+      <label class="checkline" id="worker-active-wrap"><input type="checkbox" id="worker-active" checked> פועל פעיל</label>
+      <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="worker-dialog">ביטול</button><button type="submit" class="button button-primary" id="save-worker">שמירת פועל</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="assignment-dialog" class="app-dialog" aria-labelledby="assignment-dialog-title">
+    <form id="assignment-form" class="dialog-content">
+      <div class="dialog-top"><div><p class="eyebrow">יומן העבודה של הפועל</p><h2 id="assignment-dialog-title">שיבוץ פועל</h2></div><button type="button" class="close-button" data-close="assignment-dialog" aria-label="סגירה">×</button></div>
+      <label class="form-field">תאריך <span class="required">*</span><input type="date" id="assignment-date" required></label>
+      <label class="form-field">פועל <span class="required">*</span><select id="assignment-worker" required><option value="">בחר פועל</option></select></label>
+      <div class="workday-helper">אפשר לשבץ מיקום בבוקר, ובסיום היום להוסיף לכל פועל את כל המיקומים והמלאכות שביצע. כל יום נספר <strong>פעם אחת</strong> לכל פועל.</div>
+      <div class="work-items-heading"><strong>מיקומים ומלאכות ביום זה</strong><span id="work-items-count"></span></div>
+      <div id="assignment-work-items" class="work-items-editor"></div>
+      <datalist id="location-options"></datalist>
+      <button type="button" class="button button-outline add-work-button" id="add-work-item">＋ הוסף מיקום / מלאכה</button>
+      <label class="form-field">מנהל עבודה <span class="optional">לא חובה</span><input id="assignment-manager" type="text" maxlength="100" placeholder="מי הפעיל את הפועל היום?"></label>
+      <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="assignment-dialog">ביטול</button><button type="submit" class="button button-primary">שמירת שיבוץ</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="history-dialog" class="app-dialog" aria-labelledby="history-dialog-title">
+    <div class="dialog-content"><div class="dialog-top"><div><p class="eyebrow">היסטוריית עבודה</p><h2 id="history-dialog-title">שיבוצי פועל</h2></div><button type="button" class="close-button" data-close="history-dialog" aria-label="סגירה">×</button></div><div id="history-content"></div><button type="button" class="button button-quiet full-width" data-close="history-dialog">סגירה</button></div>
+  </dialog>
+
+  <dialog id="help-dialog" class="app-dialog help-dialog" aria-labelledby="help-dialog-title">
+    <div class="dialog-content"><div class="dialog-top"><h2 id="help-dialog-title">איך עובדים עם האפליקציה?</h2><button type="button" class="close-button" data-close="help-dialog" aria-label="סגירה">×</button></div><ol class="help-steps"><li>בלשונית <b>פועלים</b> מוסיפים את שמו, התמונה וחברת כוח האדם של כל פועל.</li><li>בלשונית <b>שיבוץ יומי</b> בוחרים תאריך ופועל ומזינים את המיקומים והמלאכות. אפשר להוסיף כמה שורות לאותו יום.</li><li>בסיום היום אפשר ללחוץ על "עריכת יום" ולהוסיף מיקומים או מלאכות. העתקה מאתמול מעתיקה מיקומים בלבד, בלי מלאכות.</li><li>בלשונית <b>דוחות וגיבוי</b> מפיקים דוח תקופתי ומורידים גיבוי של המידע.</li></ol><button class="button button-primary full-width" data-close="help-dialog">הבנתי</button></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
