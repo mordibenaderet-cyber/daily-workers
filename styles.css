@@ -49,3 +49,45 @@
 .hours-notice{padding:12px 14px;background:#fff7e8;border:1px solid #eedcb6;border-radius:12px;color:#875b28;font-size:13px;line-height:1.65}
 @media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat-card{min-height:76px}.workday-card .card-actions .small-action{flex:1 1 calc(50% - 6px)}}
 @media print{.hours-notice{color:#444;border:1px solid #ccc;background:#fff}}
+
+
+/* v4: immediately visible, inline daily hours entry for all assigned workers */
+.version-label{font-size:11px;vertical-align:middle;font-weight:750;letter-spacing:0;border:1px solid #7796a1;color:#d4ebea;padding:2px 6px;border-radius:6px;margin-right:4px}
+.hours-board{background:#fff;border:1px solid #b9ded2;border-radius:18px;box-shadow:0 9px 25px rgba(10,76,63,.08);padding:19px;margin:9px 0 22px}
+.hours-board-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.hours-board-heading h2{font-size:20px;line-height:1.4;letter-spacing:-.5px;margin:5px 0 7px;color:#1c4c48}
+.hours-board-heading p:not(.eyebrow){font-size:13px;color:#667f7f;line-height:1.6;margin:0}
+.hours-board-count{white-space:nowrap;border-radius:999px;background:#e8f6ef;color:#24634e;padding:8px 12px;font-weight:800;font-size:12px}
+.hours-board-list{display:grid;gap:10px;max-height:390px;overflow-y:auto;overscroll-behavior:contain;padding:2px 3px 3px}
+.hours-board-empty{padding:16px;text-align:center;border:1px dashed #cbdcd7;border-radius:12px;color:#688481;font-size:13px;line-height:1.7;background:#f8fcfa}
+.hours-board-row{display:grid;grid-template-columns:minmax(140px,1fr) minmax(245px,auto) auto;align-items:center;gap:16px;padding:12px;border:1px solid #e0ebe6;border-radius:13px;background:#f8fbfa}
+.hours-board-worker{display:flex;align-items:center;gap:10px;min-width:0}
+.hours-board-avatar{width:39px;height:39px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;background:#e1eee9;overflow:hidden;font-size:19px}
+.hours-board-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.hours-board-name{min-width:0;display:grid;gap:4px}
+.hours-board-name strong{font-size:14px;overflow-wrap:anywhere}
+.hours-board-name small{font-size:11px;color:#7b8c8b;overflow-wrap:anywhere}
+.hours-board-controls{display:flex;align-items:end;gap:9px}
+.hours-board-controls label{display:grid;gap:4px;font-size:11px;color:#59746b;font-weight:800}
+.hours-board-controls input{width:67px;height:40px;background:#fff;border:1px solid #ccdcd5;border-radius:9px;padding:7px 8px;font-size:16px;font-weight:750;text-align:center;direction:ltr}
+.hours-board-controls input:focus{outline:2px solid #72b8ab;outline-offset:1px}
+.hours-board-save{height:40px;min-height:40px;padding:8px 12px;font-size:12px}
+.hours-board-status{font-size:11px;font-weight:800;white-space:nowrap;text-align:center}
+.hours-board-status.is-complete{color:#248468}
+.hours-board-status.is-missing{color:#a47840}
+@media(max-width:790px){.hours-board-row{grid-template-columns:1fr auto}.hours-board-worker{grid-column:1/-1}.hours-board-status{grid-column:2;grid-row:2}.hours-board-controls{grid-column:1;grid-row:2}.hours-board-heading{align-items:flex-start}.hours-board-heading h2{font-size:18px}}
+@media(max-width:450px){.hours-board{padding:13px}.hours-board-heading{flex-wrap:wrap}.hours-board-count{padding:6px 9px}.hours-board-row{gap:9px;padding:10px}.hours-board-controls{gap:6px}.hours-board-controls input{width:53px;height:39px;padding:5px;font-size:14px}.hours-board-save{padding:8px 9px;font-size:11px}.hours-board-status{font-size:10px}.hours-board-list{max-height:375px}}
+@media print{.hours-board{display:none!important}}
+
+/* v5: start/end clocks with an automatic daily duration preview */
+.hours-board-row{grid-template-columns:minmax(140px,1fr) minmax(310px,auto) minmax(125px,auto)}
+.hours-board-controls input{width:105px;min-width:0;direction:ltr;text-align:center;font-variant-numeric:tabular-nums}
+.hours-board-controls label{font-size:12px}
+.hours-board-status{display:flex;flex-direction:column;gap:3px;white-space:normal;text-align:center;line-height:1.45}
+.hours-board-status small{font-size:10px;font-weight:500;color:#647e78;max-width:200px}
+.hours-board-result{font-size:12px;font-weight:800}
+.hours-clear{background:transparent;color:#a35b4b;border:0;font-size:10px;text-decoration:underline;cursor:pointer;margin:1px auto;padding:2px 5px;font-weight:650}
+.daily-hours-preview{margin:0;border:1px solid #c6e6d1;border-radius:11px;padding:10px 12px;background:#fff;font-size:14px;font-weight:850;color:#236248;font-variant-numeric:tabular-nums}
+.daily-hours-inputs input[type=time]{font-size:19px;text-align:center;direction:ltr;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.hours-board-row{grid-template-columns:1fr}.hours-board-worker{grid-column:1}.hours-board-controls{grid-column:1}.hours-board-status{grid-column:1;grid-row:auto;align-items:flex-start;text-align:right}}
+@media(max-width:450px){.hours-board-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:9px}.hours-board-controls label{min-width:0}.hours-board-controls input{width:100%;min-width:0;height:43px;font-size:16px}.hours-board-save{grid-column:1/-1;font-size:13px;height:42px}.hours-board-status{align-items:stretch}.hours-board-status small{max-width:none}}

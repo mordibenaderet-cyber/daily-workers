@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=5.0.0">
   <title>ניהול יומיות | ניהול פועלים</title>
 </head>
 <body>
@@ -22,7 +22,7 @@
           <div class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none"><path d="M9 30v-3a15 15 0 0 1 9-13.7V10h12v3.3A15 15 0 0 1 39 27v3H9Z" fill="#F8BE68"/><path d="M6 30h36a3 3 0 0 1 0 6H6a3 3 0 0 1 0-6Z" fill="#fff"/><path d="M20 11v12m8-12v12" stroke="#133B49" stroke-width="3" stroke-linecap="round"/></svg>
           </div>
-          <div><strong>ניהול יומיות</strong><span>פועלים • חברות כוח אדם • שיבוצים</span></div>
+          <div><strong>ניהול יומיות <small class="version-label">v5</small></strong><span>פועלים • חברות כוח אדם • שיבוצים</span></div>
         </div>
         <div class="header-tools"><span class="offline-indicator" id="offline-indicator" title="מצב רשת"></span><button class="icon-button header-help" id="help-button" type="button" aria-label="עזרה" title="עזרה">?</button></div>
       </div>
@@ -37,7 +37,7 @@
     <main class="main-content">
       <section class="panel active" id="panel-daily" aria-labelledby="daily-heading">
         <div class="section-heading">
-          <div><p class="eyebrow">יומן העבודה</p><h1 id="daily-heading">איפה כולם עובדים היום?</h1><p class="section-subtitle">שיבוץ בבוקר, סך שעות יומי לפועל, ותיעוד המיקומים והמלאכות בסוף היום.</p></div>
+          <div><p class="eyebrow">יומן העבודה</p><h1 id="daily-heading">איפה כולם עובדים היום?</h1><p class="section-subtitle">שיבוץ בבוקר, שעות כניסה ויציאה לכל פועל, ותיעוד המלאכות בסוף היום.</p></div>
         </div>
         <div class="date-control card-lite">
           <button type="button" id="previous-day" class="day-arrow" aria-label="יום קודם" title="יום קודם">›</button>
@@ -46,6 +46,13 @@
         </div>
         <div class="stats-grid" id="daily-stats" aria-live="polite"></div>
         <div class="actions-bar"><button id="new-assignment" class="button button-primary" type="button"><span>＋</span> שיבוץ פועל</button><button id="copy-previous" class="button button-quiet" type="button">העתק מיקומים מאתמול</button></div>
+        <section class="hours-board" aria-labelledby="hours-board-title">
+          <div class="hours-board-heading">
+            <div><p class="eyebrow">סיכום סוף היום</p><h2 id="hours-board-title">⏱️ שעת התחלה וסיום לכל פועל</h2><p>מזינים כניסה ויציאה פעם אחת לכל פועל. סך השעות מחושב אוטומטית, בלי קשר למספר המיקומים והמלאכות.</p></div>
+            <span id="hours-board-count" class="hours-board-count"></span>
+          </div>
+          <div id="hours-board-list" class="hours-board-list" aria-live="polite"></div>
+        </section>
         <div class="search-row"><label class="search-field"><span aria-hidden="true">⌕</span><input type="search" id="daily-search" placeholder="חיפוש פועל, מיקום או מלאכה..." aria-label="חיפוש שיבוצים"></label><select id="daily-company-filter" aria-label="סינון לפי חברה"><option value="">כל החברות</option></select></div>
         <div id="daily-list" class="items-list"></div>
       </section>
@@ -90,9 +97,10 @@
       <label class="form-field">פועל <span class="required">*</span><select id="assignment-worker" required><option value="">בחר פועל</option></select></label>
       <div class="workday-helper">אפשר לשבץ מיקום בבוקר, ובסיום היום להוסיף את כל העבודות שבוצעו. שעות העבודה נרשמות <strong>פעם אחת לכל פועל ביום</strong>, ללא חלוקה למיקומים או מלאכות.</div>
       <div class="daily-hours-editor" id="daily-hours-editor">
-        <div class="daily-hours-heading"><span class="daily-hours-icon">⏱️</span><div><strong>סה״כ שעות עבודה ביום</strong><small>מזינים פעם אחת בסוף היום. לא לפי מיקום.</small></div></div>
-        <div class="daily-hours-inputs"><label class="form-field">שעות<input id="assignment-hours" type="number" inputmode="numeric" min="0" max="24" step="1" placeholder="למשל 8" aria-label="מספר שעות עבודה ביום"></label><label class="form-field">דקות<input id="assignment-minutes" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="למשל 30" aria-label="מספר דקות עבודה ביום"></label></div>
-        <p class="daily-hours-hint">דוגמה: 8 שעות ו-30 דקות. השאר את שני השדות ריקים אם עדיין אין דיווח.</p>
+        <div class="daily-hours-heading"><span class="daily-hours-icon">⏱️</span><div><strong>שעות התחלה וסיום</strong><small>ממלאים פעם אחת לכל פועל ביום — לא לפי מיקום.</small></div></div>
+        <div class="daily-hours-inputs"><label class="form-field">שעת התחלה<input id="assignment-start-time" type="time" step="60" aria-label="שעת תחילת עבודה"></label><label class="form-field">שעת סיום<input id="assignment-end-time" type="time" step="60" aria-label="שעת סיום עבודה"></label></div>
+        <p id="assignment-hours-preview" class="daily-hours-preview" aria-live="polite">הסך יחושב אוטומטית.</p>
+        <p class="daily-hours-hint">לדוגמה: 07:00 עד 16:30 = 9:30 שעות. אם הסיום מוקדם מההתחלה, ייחשב לסיום ביום הבא. לא מנוכות הפסקות.</p>
       </div>
       <div class="work-items-heading"><strong>מיקומים ומלאכות ביום זה</strong><span id="work-items-count"></span></div>
       <div id="assignment-work-items" class="work-items-editor"></div>
@@ -108,9 +116,9 @@
   </dialog>
 
   <dialog id="help-dialog" class="app-dialog help-dialog" aria-labelledby="help-dialog-title">
-    <div class="dialog-content"><div class="dialog-top"><h2 id="help-dialog-title">איך עובדים עם האפליקציה?</h2><button type="button" class="close-button" data-close="help-dialog" aria-label="סגירה">×</button></div><ol class="help-steps"><li>בלשונית <b>פועלים</b> מוסיפים את שמו, התמונה וחברת כוח האדם של כל פועל.</li><li>בלשונית <b>שיבוץ יומי</b> בוחרים תאריך ופועל ומזינים את המיקומים והמלאכות. אפשר להוסיף כמה שורות לאותו יום.</li><li>בסיום היום אפשר ללחוץ על "דווח שעות", להזין סך שעות ודקות לכל פועל (בלי חלוקה בין המיקומים), וללחוץ על "עריכת יום" כדי להוסיף מיקומים או מלאכות. העתקה מאתמול מעתיקה מיקומים בלבד, בלי מלאכות.</li><li>בלשונית <b>דוחות וגיבוי</b> מפיקים סיכום שעות יומי, לפי פועל ולפי חברת כוח אדם, מייצאים לאקסל ומורידים גיבוי של המידע.</li></ol><button class="button button-primary full-width" data-close="help-dialog">הבנתי</button></div>
+    <div class="dialog-content"><div class="dialog-top"><h2 id="help-dialog-title">איך עובדים עם האפליקציה?</h2><button type="button" class="close-button" data-close="help-dialog" aria-label="סגירה">×</button></div><ol class="help-steps"><li>בלשונית <b>פועלים</b> מוסיפים את שמו, התמונה וחברת כוח האדם של כל פועל.</li><li>בלשונית <b>שיבוץ יומי</b> בוחרים תאריך ופועל ומזינים את המיקומים והמלאכות. אפשר להוסיף כמה שורות לאותו יום.</li><li>בסיום היום פותחים בלשונית "שיבוץ יומי" את אזור "שעת התחלה וסיום לכל פועל", מזינים התחלה וסיום ליד כל עובד ולוחצים "שמור שעות". האפליקציה מחשבת לבד את סך השעות. אין צורך לפתוח כרטיס עובד. ללחוץ על "עריכת יום" כדי להוסיף מיקומים או מלאכות. העתקה מאתמול מעתיקה מיקומים בלבד, בלי מלאכות.</li><li>בלשונית <b>דוחות וגיבוי</b> מפיקים סיכום שעות יומי, לפי פועל ולפי חברת כוח אדם, מייצאים לאקסל ומורידים גיבוי של המידע.</li></ol><button class="button button-primary full-width" data-close="help-dialog">הבנתי</button></div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=5.0.0" defer></script>
 </body>
 </html>
