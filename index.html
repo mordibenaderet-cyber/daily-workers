@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <link rel="stylesheet" href="styles.css?v=7.0.0">
+  <link rel="stylesheet" href="styles.css?v=8.0.0">
   <title>ניהול יומיות | Mordi</title>
 </head>
 <body>
@@ -20,7 +20,7 @@
       <div class="header-inner">
         <div class="brand">
           <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M9 30v-3a15 15 0 0 1 9-13.7V10h12v3.3A15 15 0 0 1 39 27v3H9Z" fill="#F3B85C"/><path d="M6 30h36a3 3 0 0 1 0 6H6a3 3 0 0 1 0-6Z" fill="#fff"/><path d="M20 11v12m8-12v12" stroke="#153A46" stroke-width="3" stroke-linecap="round"/></svg></div>
-          <div class="brand-text"><div class="brand-name">ניהול יומיות <span class="version-label">v7 PRO</span></div><div class="brand-subtitle">ניהול פועלים ועבודות באתר</div></div>
+          <div class="brand-text"><div class="brand-name">ניהול יומיות <span class="version-label">v8 PRO</span></div><div class="brand-subtitle">ניהול פועלים ועבודות באתר</div></div>
         </div>
         <div class="header-tools"><span class="connection-indicator"><i class="offline-indicator" id="offline-indicator"></i><span>שמירה במכשיר</span></span><button class="icon-button header-help" id="help-button" type="button" aria-label="מדריך שימוש" title="מדריך שימוש">?</button></div>
       </div>
@@ -56,7 +56,7 @@
           <div class="hours-board-heading"><div><h2 id="hours-board-title">שעות עבודה לפי פועל</h2><p>לכל פועל דיווח אחד ביום, בלי קשר למספר המיקומים והמלאכות שבהם עבד.</p></div><span id="hours-board-count" class="hours-board-count"></span></div>
           <div id="hours-board-list" class="hours-board-list" aria-live="polite"></div>
         </section>
-        <div class="help-inline"><span aria-hidden="true">ⓘ</span><p>הזן שעה בפורמט <bdi>HH:MM</bdi>, למשל <bdi>07:00</bdi> ו־<bdi>16:30</bdi>. אפשר גם להקליד רק <bdi>0730</bdi> והיא תהפוך אוטומטית ל־<bdi>07:30</bdi>. אין צורך להזין סך שעות ידנית. יציאה מוקדמת מהכניסה תחושב כיציאה ביום הבא; הפסקות אינן מנוכות.</p></div>
+        <div class="help-inline"><span aria-hidden="true">ⓘ</span><p>הזן שעה בפורמט <bdi>HH:MM</bdi>, למשל <bdi>07:00</bdi> ו־<bdi>16:30</bdi>. אין צורך להזין סך שעות ידנית. יציאה מוקדמת מהכניסה תחושב כיציאה ביום הבא; הפסקות אינן מנוכות.</p></div>
       </section>
       <section class="panel" id="panel-workers" aria-labelledby="workers-heading">
         <div class="section-heading spread"><div><p class="eyebrow">מאגר עובדים</p><h1 id="workers-heading">הפועלים שלי</h1><p class="section-subtitle">כרטיס עובד אחד עם תמונה, שם וחברת כוח אדם. ההיסטוריה נשמרת.</p></div><button type="button" id="new-worker" class="button button-primary">＋ הוסף פועל</button></div>
@@ -84,7 +84,7 @@
   <dialog id="assignment-dialog" class="app-dialog" aria-labelledby="assignment-dialog-title"><form id="assignment-form" class="dialog-content">
     <div class="dialog-top"><div><p class="eyebrow">ניהול יום עבודה</p><h2 id="assignment-dialog-title">שיבוץ פועל</h2></div><button type="button" class="close-button" data-close="assignment-dialog" aria-label="סגירה">×</button></div>
     <div class="field-grid"><label class="form-field">תאריך <span class="required">*</span><input type="date" id="assignment-date" required></label><label class="form-field">פועל <span class="required">*</span><select id="assignment-worker" required><option value="">בחר פועל</option></select></label></div>
-    <div class="daily-hours-editor" id="daily-hours-editor"><div class="daily-hours-heading"><div class="clock-heading-icon" aria-hidden="true">◷</div><div><strong>שעות כניסה ויציאה</strong><small>דיווח אחד ביום · אפשר להקליד 0730 במקום 07:30</small></div></div>
+    <div class="daily-hours-editor" id="daily-hours-editor"><div class="daily-hours-heading"><div class="clock-heading-icon" aria-hidden="true">◷</div><div><strong>שעות כניסה ויציאה <span class="clock-form-version">v8</span></strong><small>דיווח אחד ביום, ללא חלוקה למיקומים</small></div></div>
       <div class="daily-hours-inputs"><label class="form-field" for="assignment-start-time">שעת כניסה<input id="assignment-start-time" name="startTime" type="text" inputmode="numeric" maxlength="5" placeholder="07:00" autocomplete="off" dir="ltr" aria-label="שעת כניסה, למשל 07:00"></label><label class="form-field" for="assignment-end-time">שעת יציאה<input id="assignment-end-time" name="endTime" type="text" inputmode="numeric" maxlength="5" placeholder="16:30" autocomplete="off" dir="ltr" aria-label="שעת יציאה, למשל 16:30"></label></div>
       <p id="assignment-hours-preview" class="daily-hours-preview" aria-live="polite">הזן שעות כניסה ויציאה לחישוב</p>
     </div>
@@ -96,6 +96,6 @@
   <dialog id="history-dialog" class="app-dialog" aria-labelledby="history-dialog-title"><div class="dialog-content"><div class="dialog-top"><div><p class="eyebrow">רישומים קודמים</p><h2 id="history-dialog-title">היסטוריית עבודה</h2></div><button type="button" class="close-button" data-close="history-dialog" aria-label="סגירה">×</button></div><div id="history-content"></div><button type="button" class="button button-quiet full-width" data-close="history-dialog">סגירה</button></div></dialog>
   <dialog id="help-dialog" class="app-dialog help-dialog" aria-labelledby="help-dialog-title"><div class="dialog-content"><div class="dialog-top"><h2 id="help-dialog-title">מדריך קצר</h2><button type="button" class="close-button" data-close="help-dialog" aria-label="סגירה">×</button></div><ol class="help-steps"><li>בלשונית <b>פועלים</b> מוסיפים שם, חברה ותמונה לכל עובד.</li><li>בלשונית <b>יומן עבודה</b> בוחרים תאריך, משבצים פועל ומתעדים מספר מיקומים ומלאכות באותו יום.</li><li>בלשונית <b>דיווח שעות</b> מזינים שעת כניסה ויציאה לכל פועל. ניתן להזין גם בשיבוץ עצמו. האפליקציה מחשבת את הסך באופן אוטומטי.</li><li>בלשונית <b>דוחות וגיבוי</b> מסננים תאריכים וחברה, מייצאים נתונים, ומורידים גיבוי מלא.</li></ol><button class="button button-primary full-width" data-close="help-dialog">הבנתי</button></div></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=7.0.0" defer></script>
+  <script src="app.js?v=8.0.0" defer></script>
 </body>
 </html>

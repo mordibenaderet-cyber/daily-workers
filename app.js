@@ -339,7 +339,7 @@
     downloadCSV(`daily-work-details-${$('report-from').value}-to-${$('report-to').value}.csv`,lines);
     toast(`יוצאו ${details.length} שורות פירוט עבודה`);
   }
-  function exportBackup(){const payload={app:'mordi-daily-workers',version:7,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
+  function exportBackup(){const payload={app:'mordi-daily-workers',version:8,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
   function validateBackup(raw) {
     if(!raw||raw.app!=='mordi-daily-workers'||!Array.isArray(raw.workers)||!Array.isArray(raw.assignments)||raw.workers.length>5000||raw.assignments.length>100000)throw new Error('קובץ גיבוי לא מתאים');
     const ids=new Set(),workers=raw.workers.map(w=>{
