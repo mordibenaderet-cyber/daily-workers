@@ -91,3 +91,24 @@
 .daily-hours-inputs input[type=time]{font-size:19px;text-align:center;direction:ltr;font-variant-numeric:tabular-nums}
 @media(max-width:900px){.hours-board-row{grid-template-columns:1fr}.hours-board-worker{grid-column:1}.hours-board-controls{grid-column:1}.hours-board-status{grid-column:1;grid-row:auto;align-items:flex-start;text-align:right}}
 @media(max-width:450px){.hours-board-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:9px}.hours-board-controls label{min-width:0}.hours-board-controls input{width:100%;min-width:0;height:43px;font-size:16px}.hours-board-save{grid-column:1/-1;font-size:13px;height:42px}.hours-board-status{align-items:stretch}.hours-board-status small{max-width:none}}
+
+/* v6: unmistakable start/end clock fields inside assignment modal */
+.daily-hours-editor{background:#eff8f4;border:2px solid #8ccfbd;padding:16px;gap:15px}
+.daily-hours-heading{align-items:flex-start}
+.daily-hours-heading strong{font-size:17px;color:#165a48;line-height:1.45}
+.daily-hours-heading small{line-height:1.6;font-size:12px;color:#416d62}
+.clock-update-label{margin-inline-start:auto;flex:none;border-radius:7px;background:#dcf3eb;color:#13624e;font-size:11px;font-weight:900;padding:4px 7px}
+.daily-hours-inputs .form-field{gap:8px;font-size:14px;font-weight:800;color:#194b43}
+.daily-hours-inputs input[type=time]{width:100%;min-width:0;height:62px;padding:10px 11px;font-size:22px;font-weight:800;color:#112f39;background:#fff;border:2px solid #a6d9c9;border-radius:13px;box-sizing:border-box}
+.daily-hours-inputs input[type=time]:focus{outline:3px solid #8fcdbc;outline-offset:1px}
+.daily-hours-preview{font-size:16px;background:#fff;color:#15563e;padding:14px 12px;border:2px solid #badfce}
+@media(max-width:450px){.daily-hours-editor{padding:13px}.daily-hours-inputs{gap:9px}.daily-hours-inputs input[type=time]{font-size:20px;min-width:0}}
+/* Keep native mobile clock controls entirely within the dialog (iPhone/Safari included). */
+.daily-hours-heading{flex-wrap:wrap}
+.daily-hours-heading>div{flex:1 1 165px;min-width:0}
+.clock-update-label{margin-inline-start:0}
+@media(max-width:480px){
+  .daily-hours-inputs{display:grid;grid-template-columns:minmax(0,1fr);gap:13px}
+  .daily-hours-inputs .form-field{min-width:0;width:100%}
+  .daily-hours-inputs input[type=time]{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;font-size:20px}
+}

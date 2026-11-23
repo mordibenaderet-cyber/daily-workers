@@ -16,10 +16,10 @@
   const CLOCK_PATTERN=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
   function timeInterval(start,end) {
     if(!start&&!end)return null;
-    if(!CLOCK_PATTERN.test(start)||!CLOCK_PATTERN.test(end))throw new Error('יש להזין שעת התחלה ושעת סיום תקינות');
+    if(!CLOCK_PATTERN.test(start)||!CLOCK_PATTERN.test(end))throw new Error('יש להזין שעת כניסה ושעת יציאה תקינות');
     const [sh,sm]=start.split(':').map(Number),[eh,em]=end.split(':').map(Number);
     const begin=sh*60+sm,finish=eh*60+em;
-    if(begin===finish)throw new Error('שעת הסיום לא יכולה להיות זהה לשעת ההתחלה');
+    if(begin===finish)throw new Error('שעת היציאה לא יכולה להיות זהה לשעת הכניסה');
     const overnight=finish<begin;
     return {startTime:start,endTime:end,totalMinutes:(overnight?finish+1440:finish)-begin,overnight};
   }
@@ -85,8 +85,8 @@
       return `<form class="hours-board-row" data-quick-hours="${esc(a.id)}">
         <div class="hours-board-worker">${avatar(w,'hours-board-avatar')}<div class="hours-board-name"><strong>${esc(w.name)}</strong><small>${esc(w.company)}</small></div></div>
         <div class="hours-board-controls">
-          <label>שעת התחלה<input name="startTime" type="time" step="60" value="${esc(a.startTime||'')}" aria-label="שעת התחלה של ${esc(w.name)}" /></label>
-          <label>שעת סיום<input name="endTime" type="time" step="60" value="${esc(a.endTime||'')}" aria-label="שעת סיום של ${esc(w.name)}" /></label>
+          <label>שעת כניסה<input name="startTime" type="time" step="60" value="${esc(a.startTime||'')}" aria-label="שעת כניסה של ${esc(w.name)}" /></label>
+          <label>שעת יציאה<input name="endTime" type="time" step="60" value="${esc(a.endTime||'')}" aria-label="שעת יציאה של ${esc(w.name)}" /></label>
           <button class="button button-primary hours-board-save" type="submit">שמור שעות</button>
         </div>
         <div class="hours-board-status ${hasHours(a)?'is-complete':'is-missing'}">
@@ -106,7 +106,7 @@
     try{
       const interval=timeInterval(start,end);
       result.textContent=`סה״כ ${formatHours(interval.totalMinutes)}${interval.overnight?' (סיום למחרת)':''} · טרם נשמר`;
-    }catch(err){result.textContent=start&&end?err.message:'יש למלא גם שעת התחלה וגם שעת סיום';}
+    }catch(err){result.textContent=start&&end?err.message:'יש למלא גם שעת כניסה וגם שעת יציאה';}
   }
   async function saveQuickHours(e) {
     const form=e.target.closest('form[data-quick-hours]');if(!form)return;
@@ -114,7 +114,7 @@
     const a=state.assignments.find(x=>x.id===form.dataset.quickHours);
     if(!a){toast('השיבוץ לא נמצא. נסה לרענן את הדף');return;}
     const start=form.elements.namedItem('startTime').value,end=form.elements.namedItem('endTime').value;
-    if(!start&&!end){toast('יש להזין שעת התחלה ושעת סיום');return;}
+    if(!start&&!end){toast('יש להזין שעת כניסה ושעת יציאה');return;}
     let interval;
     try{interval=timeInterval(start,end);}catch(error){toast(error.message);return;}
     const button=form.querySelector('button[type="submit"]');button.disabled=true;
@@ -213,11 +213,11 @@
       const existing=state.assignmentEditId?state.assignments.find(a=>a.id===state.assignmentEditId):null;
       preview.textContent=existing&&!hasTimeRange(existing)&&hasHours(existing)
         ?`דיווח ישן: ${formatHours(dailyMinutes(existing))} שעות. הזן התחלה וסיום כדי לעדכן.`
-        :'שעות העבודה יחושבו אוטומטית לאחר הזנת התחלה וסיום.';
+        :'סך שעות עבודה: הזן שעת כניסה ויציאה לחישוב אוטומטי.';
       return;
     }
-    try{const interval=timeInterval(start,end);preview.textContent=`סה״כ: ${formatHours(interval.totalMinutes)} שעות${interval.overnight?' · שעת הסיום למחרת':''}`;}
-    catch(err){preview.textContent=start&&end?err.message:'יש להזין גם שעת התחלה וגם שעת סיום';}
+    try{const interval=timeInterval(start,end);preview.textContent=`סך שעות עבודה: ${formatHours(interval.totalMinutes)} שעות${interval.overnight?' · שעת הסיום למחרת':''}`;}
+    catch(err){preview.textContent=start&&end?err.message:'יש להזין גם שעת כניסה וגם שעת יציאה';}
   }
   async function saveAssignment(e) {
     e.preventDefault();
@@ -324,7 +324,7 @@
     downloadCSV(`daily-work-details-${$('report-from').value}-to-${$('report-to').value}.csv`,lines);
     toast(`יוצאו ${details.length} שורות פירוט עבודה`);
   }
-  function exportBackup(){const payload={app:'mordi-daily-workers',version:5,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
+  function exportBackup(){const payload={app:'mordi-daily-workers',version:6,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
   function validateBackup(raw) {
     if(!raw||raw.app!=='mordi-daily-workers'||!Array.isArray(raw.workers)||!Array.isArray(raw.assignments)||raw.workers.length>5000||raw.assignments.length>100000)throw new Error('קובץ גיבוי לא מתאים');
     const ids=new Set(),workers=raw.workers.map(w=>{
@@ -375,6 +375,6 @@
     document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return; if(el.id==='empty-new-worker'||el.id==='empty-new-worker-list')openWorker();if(el.id==='empty-new-assignment')openAssignment();if(el.id==='print-report')window.print();if(el.dataset.historyWorker)openHistory(el.dataset.historyWorker);if(el.dataset.historyDate){state.currentDate=el.dataset.historyDate;hideDialog('history-dialog');nav('daily');}if(el.dataset.editWorker)openWorker(el.dataset.editWorker);if(el.dataset.assignWorker){const w=workerById(el.dataset.assignWorker);if(w?.active===false){toast('יש להפוך את הפועל לפעיל כדי לשבץ אותו');return;}nav('daily');openAssignment(null,el.dataset.assignWorker);}if(el.dataset.addWorkAssignment)openAssignment(el.dataset.addWorkAssignment,null,true);if(el.dataset.editAssignment)openAssignment(el.dataset.editAssignment);if(el.dataset.hoursAssignment)openAssignment(el.dataset.hoursAssignment,null,false,true);if(el.dataset.deleteAssignment)deleteAssignment(el.dataset.deleteAssignment);if(el.dataset.clearHours)clearQuickHours(el.dataset.clearHours);});
     const onlineStatus=()=>{$('offline-indicator').classList.toggle('offline',!navigator.onLine);$('offline-indicator').title=navigator.onLine?'מחובר לרשת':'לא מחובר לרשת – האפליקציה עובדת גם ללא אינטרנט לאחר התקנה';};window.addEventListener('online',onlineStatus);window.addEventListener('offline',onlineStatus);onlineStatus();
   }
-  async function init() {const now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);$('report-from').value=localISO(monthStart);$('report-to').value=localISO(now);$('daily-date').value=state.currentDate;try{db=await openDB();await load();bind();renderAll();if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);}catch(e){console.error(e);document.querySelector('.main-content').innerHTML='<div class="empty-state"><h2>לא ניתן לפתוח את מסד הנתונים</h2><p>בדוק שהגלישה אינה במצב פרטי ושהדפדפן מאפשר שמירת נתונים מקומית.</p></div>';}}
+  async function init() {const now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);$('report-from').value=localISO(monthStart);$('report-to').value=localISO(now);$('daily-date').value=state.currentDate;try{db=await openDB();await load();bind();renderAll();if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>reg.update()).catch(console.warn);}catch(e){console.error(e);document.querySelector('.main-content').innerHTML='<div class="empty-state"><h2>לא ניתן לפתוח את מסד הנתונים</h2><p>בדוק שהגלישה אינה במצב פרטי ושהדפדפן מאפשר שמירת נתונים מקומית.</p></div>';}}
   init();
 })();
