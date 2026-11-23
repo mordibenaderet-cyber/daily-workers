@@ -10,6 +10,13 @@
   function addDays(s, number) { const [y,m,d] = s.split('-').map(Number); const value = new Date(y,m-1,d,12); value.setDate(value.getDate()+number); return localISO(value); }
   function niceDate(s) { return new Intl.DateTimeFormat('he-IL', {weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(`${s}T12:00:00`)); }
   function shortDate(s) { return s.split('-').reverse().join('/'); }
+  // Hours are recorded once per worker per calendar day, never per work location.
+  // null = hours not entered yet; zero is a valid explicit entry.
+  function dailyMinutes(a) { return Number.isInteger(a?.totalMinutes) && a.totalMinutes>=0 && a.totalMinutes<=1440 ? a.totalMinutes : null; }
+  function formatHours(minutes) { return minutes===null ? 'לא דווח' : `${Math.floor(minutes/60)}:${String(minutes%60).padStart(2,'0')}`; }
+  function sumMinutes(rows) { return rows.reduce((sum,a)=>sum+(dailyMinutes(a)??0),0); }
+  function hasHours(a) { return dailyMinutes(a)!==null; }
+
   function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function unique(values) { return [...new Set(values.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he')); }
   const clean = value => String(value??'').trim();
@@ -43,7 +50,7 @@
   function renderStats() {
     const items=todayAssignments(), active=state.workers.filter(w=>w.active!==false).length;
     const sites=unique(items.flatMap(a=>workItems(a).map(x=>x.location))).length;
-    const values=[{v:active,l:'פועלים פעילים',i:'👷'},{v:items.length,l:'פועלים ששובצו',i:'📍'},{v:sites,l:'מיקומים רשומים',i:'🏗️'}];
+    const values=[{v:active,l:'פועלים פעילים',i:'👷'},{v:items.length,l:'פועלים ששובצו',i:'📍'},{v:sites,l:'מיקומים רשומים',i:'🏗️'},{v:formatHours(sumMinutes(items)),l:'סה״כ שעות שדווחו',i:'⏱️'}];
     $('daily-stats').innerHTML=values.map(a=>`<div class="stat-card"><div class="stat-icon">${a.i}</div><div><div class="stat-value">${a.v}</div><div class="stat-label">${a.l}</div></div></div>`).join('');
     $('daily-date').value=state.currentDate;
   }
@@ -57,9 +64,9 @@
     const out=$('daily-list');
     if(!state.workers.length){out.innerHTML=emptyHTML('עדיין אין פועלים','מתחילים בהוספת כרטיס עובד עם תמונה, שם וחברת כוח אדם.','הוסף פועל ראשון','empty-new-worker');return;}
     if(!items.length){out.innerHTML=search||company?emptyHTML('אין תוצאות לחיפוש','נסה שם אחר או הסר את הסינון.','',''):emptyHTML('אין שיבוצים לתאריך הזה','לחץ על שיבוץ פועל כדי להגדיר איפה כל עובד נמצא.','שיבוץ פועל','empty-new-assignment');return;}
-    out.innerHTML=`<div class="day-list-intro">${items.length} פועלים · ${allWorkRows(items).length} רישומי מיקום / מלאכה</div>` + items.map(a=>{
+    out.innerHTML=`<div class="day-list-intro">${items.length} פועלים · ${allWorkRows(items).length} רישומי מיקום / מלאכה · ${items.filter(a=>!hasHours(a)).length} ללא דיווח שעות</div>` + items.map(a=>{
       const w=workerById(a.workerId),entries=workItems(a);
-      return `<article class="assignment-card workday-card">${avatar(w)}<div class="assignment-main"><div class="worker-title"><strong>${esc(w.name)}</strong><span class="company-pill">${esc(w.company)}</span><span class="entries-pill">${entries.length} ${entries.length===1?'רישום':'רישומים'}</span></div><div class="workday-entries">${entries.map((x,i)=>`<div class="workday-entry"><span class="entry-number">${i+1}</span><div><div class="work-location">📍 ${esc(x.location)}</div><div class="work-details">${x.task?'🔧 '+esc(x.task):'<span class="not-filled">מלאכה טרם הוזנה</span>'}</div></div></div>`).join('')}</div>${a.manager?`<div class="workday-manager">מנהל עבודה: ${esc(a.manager)}</div>`:''}</div><div class="card-actions"><button class="small-action primary-action" type="button" data-add-work-assignment="${esc(a.id)}">＋ הוסף עבודה</button><button class="small-action" data-edit-assignment="${esc(a.id)}" type="button">עריכת יום</button><button class="small-action danger" data-delete-assignment="${esc(a.id)}" type="button">הסרה</button></div></article>`;
+      return `<article class="assignment-card workday-card">${avatar(w)}<div class="assignment-main"><div class="worker-title"><strong>${esc(w.name)}</strong><span class="company-pill">${esc(w.company)}</span><span class="entries-pill">${entries.length} ${entries.length===1?'רישום':'רישומים'}</span></div><div class="workday-entries">${entries.map((x,i)=>`<div class="workday-entry"><span class="entry-number">${i+1}</span><div><div class="work-location">📍 ${esc(x.location)}</div><div class="work-details">${x.task?'🔧 '+esc(x.task):'<span class="not-filled">מלאכה טרם הוזנה</span>'}</div></div></div>`).join('')}</div>${a.manager?`<div class="workday-manager">מנהל עבודה: ${esc(a.manager)}</div>`:''}<div class="day-hours ${hasHours(a)?'hours-recorded':'hours-missing'}">⏱️ שעות עבודה ביום: <strong dir="ltr">${formatHours(dailyMinutes(a))}</strong></div></div><div class="card-actions"><button class="small-action hours-action" type="button" data-hours-assignment="${esc(a.id)}">${hasHours(a)?'עדכן שעות':'דווח שעות'}</button><button class="small-action primary-action" type="button" data-add-work-assignment="${esc(a.id)}">＋ הוסף עבודה</button><button class="small-action" data-edit-assignment="${esc(a.id)}" type="button">עריכת יום</button><button class="small-action danger" data-delete-assignment="${esc(a.id)}" type="button">הסרה</button></div></article>`;
     }).join('');
   }
   function emptyHTML(title,description,button,id) { return `<div class="empty-state"><div class="empty-icon">🗂️</div><h3>${esc(title)}</h3><p>${esc(description)}</p>${button?`<button class="button button-primary" id="${id}" type="button">＋ ${esc(button)}</button>`:''}</div>`; }
@@ -67,14 +74,14 @@
     const search=clean($('worker-search').value).toLowerCase(), filter=$('workers-status-filter').value;
     const items=state.workers.filter(w=>(filter==='all'||(filter==='active'?w.active!==false:w.active===false))&&(!search||[w.name,w.company].join(' ').toLowerCase().includes(search))).sort((a,b)=>a.name.localeCompare(b.name,'he'));
     $('workers-summary').textContent=`${items.length} פועלים מוצגים • ${state.workers.filter(w=>w.active!==false).length} פעילים במאגר`;
-    $('workers-list').innerHTML=items.length?items.map(w=>`<article class="worker-card">${avatar(w)}<div class="worker-info"><strong>${esc(w.name)}</strong><small>${esc(w.company)}</small>${w.active===false?'<small class="archived">לא פעיל</small>':''}</div><div class="card-actions"><button class="small-action" data-history-worker="${esc(w.id)}" type="button">היסטוריה</button><button class="small-action" data-edit-worker="${esc(w.id)}" type="button">עריכה</button><button class="small-action" data-assign-worker="${esc(w.id)}" type="button">שיבוץ</button></div></article>`).join(''):emptyHTML('אין פועלים להצגה',state.workers.length?'לא נמצאו פועלים שמתאימים לסינון.':'הוסף פועל כדי להתחיל.','הוסף פועל','empty-new-worker');
+    $('workers-list').innerHTML=items.length?items.map(w=>`<article class="worker-card">${avatar(w)}<div class="worker-info"><strong>${esc(w.name)}</strong><small>${esc(w.company)}</small>${w.active===false?'<small class="archived">לא פעיל</small>':''}</div><div class="card-actions"><button class="small-action" data-history-worker="${esc(w.id)}" type="button">היסטוריה</button><button class="small-action" data-edit-worker="${esc(w.id)}" type="button">עריכה</button><button class="small-action" data-assign-worker="${esc(w.id)}" type="button">שיבוץ</button></div></article>`).join(''):emptyHTML('אין פועלים להצגה',state.workers.length?'לא נמצאו פועלים שמתאימים לסינון.':'הוסף פועל כדי להתחיל.','הוסף פועל','empty-new-worker-list');
   }
   function openHistory(id) {
     const w=workerById(id);if(!w)return;
     const rows=state.assignments.filter(a=>a.workerId===id).sort((a,b)=>b.date.localeCompare(a.date));
     const entries=allWorkRows(rows).length;
     $('history-dialog-title').textContent=`היסטוריית העבודה של ${w.name}`;
-    $('history-content').innerHTML=`<div class="history-profile">${avatar(w)}<div><strong>${esc(w.name)}</strong><small>${esc(w.company)}</small></div><span class="history-count">${rows.length} ימים · ${entries} רישומים</span></div>${rows.length?`<div class="history-list">${rows.map(a=>`<div class="history-row"><div><strong>${shortDate(a.date)}</strong>${workItems(a).map(x=>`<span>📍 ${esc(x.location)}</span><small>מלאכה: ${esc(x.task||'לא הוזנה')}</small>`).join('')}${a.manager?`<small>מנהל עבודה: ${esc(a.manager)}</small>`:''}</div><button class="small-action" type="button" data-history-date="${a.date}">הצג יום</button></div>`).join('')}</div>`:'<div class="history-empty">עדיין אין שיבוצים לפועל זה.</div>'}`;
+    $('history-content').innerHTML=`<div class="history-profile">${avatar(w)}<div><strong>${esc(w.name)}</strong><small>${esc(w.company)}</small></div><span class="history-count">${rows.length} ימים · <bdi>${formatHours(sumMinutes(rows))}</bdi> שעות</span></div>${rows.length?`<div class="history-list">${rows.map(a=>`<div class="history-row"><div><strong>${shortDate(a.date)}</strong><small class="history-hours">⏱️ שעות ביום: <bdi>${formatHours(dailyMinutes(a))}</bdi></small>${workItems(a).map(x=>`<span>📍 ${esc(x.location)}</span><small>מלאכה: ${esc(x.task||'לא הוזנה')}</small>`).join('')}${a.manager?`<small>מנהל עבודה: ${esc(a.manager)}</small>`:''}</div><button class="small-action" type="button" data-history-date="${a.date}">הצג יום</button></div>`).join('')}</div>`:'<div class="history-empty">עדיין אין שיבוצים לפועל זה.</div>'}`;
     showDialog('history-dialog');
   }
   function showDialog(id) { $(id).showModal(); }
@@ -103,7 +110,7 @@
     refreshWorkRowLabels();
     if(focus)$('assignment-work-items').lastElementChild.querySelector('.work-item-location').focus();
   }
-  function openAssignment(id=null,preferredWorkerId=null,addBlank=false) {
+  function openAssignment(id=null,preferredWorkerId=null,addBlank=false,focusHours=false) {
     state.assignmentEditId=id;
     const a=id?state.assignments.find(x=>x.id===id):null;
     $('assignment-form').reset();
@@ -113,19 +120,32 @@
     $('assignment-worker').innerHTML='<option value="">בחר פועל</option>'+allowed.map(w=>`<option value="${esc(w.id)}">${esc(w.name)} · ${esc(w.company)}${w.active===false?' (לא פעיל)':''}</option>`).join('');
     $('assignment-worker').value=a?.workerId||preferredWorkerId||'';
     $('assignment-manager').value=a?.manager||'';
+    const minutes=dailyMinutes(a);
+    $('assignment-hours').value=minutes===null?'':String(Math.floor(minutes/60));
+    $('assignment-minutes').value=minutes===null?'':String(minutes%60);
     $('assignment-work-items').innerHTML='';
     for(const item of a?workItems(a):[{location:'',task:''}])appendWorkRow(item);
     if(addBlank)appendWorkRow();
     showDialog('assignment-dialog');
     if(addBlank)$('assignment-work-items').lastElementChild.querySelector('.work-item-location').focus();
+    if(focusHours)$('assignment-hours').focus();
   }
   async function saveAssignment(e) {
     e.preventDefault();
     const date=$('assignment-date').value,workerId=$('assignment-worker').value,manager=clean($('assignment-manager').value);
     const workItems=[...$('assignment-work-items').querySelectorAll('.work-item-row')].map(row=>({location:clean(row.querySelector('.work-item-location').value),task:clean(row.querySelector('.work-item-task').value)}));
+    const rawHours=$('assignment-hours').value,rawMinutes=$('assignment-minutes').value;
+    let totalMinutes=null;
+    if(rawHours!==''||rawMinutes!=='') {
+      const hours=rawHours===''?0:Number(rawHours),minutes=rawMinutes===''?0:Number(rawMinutes);
+      if(!Number.isInteger(hours)||!Number.isInteger(minutes)||hours<0||hours>24||minutes<0||minutes>59||(hours===24&&minutes!==0)) {
+        toast('יש להזין שעות ודקות תקינות (עד 24 שעות ביום)');return;
+      }
+      totalMinutes=hours*60+minutes;
+    }
     if(!isoDate(date)||!workerById(workerId)||!workItems.length||workItems.some(x=>!x.location)) {toast('יש לבחור תאריך, פועל ומיקום לכל שורת עבודה');return;}
     if(state.assignments.some(a=>a.date===date&&a.workerId===workerId&&a.id!==state.assignmentEditId)){toast('לפועל כבר קיים יום עבודה בתאריך זה. פתח את "עריכת יום" כדי להוסיף מיקומים ומלאכות.');return;}
-    const a={id:state.assignmentEditId||newId(),date,workerId,manager,workItems};
+    const a={id:state.assignmentEditId||newId(),date,workerId,manager,workItems,totalMinutes};
     try{await write('assignments',a);hideDialog('assignment-dialog');state.currentDate=date;renderAll();toast(state.assignmentEditId?'יום העבודה עודכן':'יום העבודה נשמר');}
     catch(err){console.error(err);toast('שמירת יום העבודה נכשלה');}
   }
@@ -137,7 +157,7 @@
   }
   async function copyPrevious() {
     const prev=addDays(state.currentDate,-1), current=new Set(todayAssignments().map(a=>a.workerId));
-    const items=state.assignments.filter(a=>a.date===prev&&!current.has(a.workerId)&&workerById(a.workerId)?.active!==false).map(a=>({id:newId(),workerId:a.workerId,date:state.currentDate,manager:a.manager||'',workItems:workItems(a).map(x=>({location:x.location,task:''}))}));
+    const items=state.assignments.filter(a=>a.date===prev&&!current.has(a.workerId)&&workerById(a.workerId)?.active!==false).map(a=>({id:newId(),workerId:a.workerId,date:state.currentDate,manager:a.manager||'',workItems:workItems(a).map(x=>({location:x.location,task:''})),totalMinutes:null}));
     if(!items.length)return toast('אין שיבוצים פנויים להעתקה מאתמול');
     try{await bulkInsert('assignments',items);toast(`הועתקו ${items.length} שיבוצים מ-${shortDate(prev)} (ללא מלאכות)`);}catch(err){console.error(err);toast('העתקת השיבוצים נכשלה');}
   }
@@ -151,22 +171,70 @@
     const rows=getReportRows();if(!rows)return;state.reportRows=rows;
     const flat=allWorkRows(rows),workerIds=unique(rows.map(a=>a.workerId));
     const from=$('report-from').value,to=$('report-to').value,title=`דוח יומיות: ${shortDate(from)} – ${shortDate(to)}`;
-    const head=`<div class="report-heading"><h2 class="report-subheading">${title}</h2><button type="button" class="button button-quiet" id="print-report">הדפסה / שמירה כ-PDF</button></div><div class="report-print"><h1>ניהול יומיות — פירוט מיקומים ומלאכות</h1><p>${esc(title)}</p></div>`;
+    const head=`<div class="report-heading"><h2 class="report-subheading">${title}</h2><button type="button" class="button button-quiet" id="print-report">הדפסה / שמירה כ-PDF</button></div><div class="report-print"><h1>ניהול יומיות — סיכום שעות ועבודות</h1><p>${esc(title)}</p></div>`;
     if(!rows.length){$('report-result').innerHTML=head+emptyHTML('אין שיבוצים בטווח שבחרת','שנה את התאריכים או חברת כוח האדם.','','');return;}
-    const summary=workerIds.map(id=>{const w=workerById(id),days=rows.filter(a=>a.workerId===id);return {name:w.name,company:w.company,days:days.length,entries:allWorkRows(days).length};}).sort((a,b)=>b.days-a.days||a.name.localeCompare(b.name,'he'));
-    $('report-result').innerHTML=head+`<div class="report-overview"><span>${workerDayCount(rows)} ימי פועל (ללא ספירה כפולה)</span><span>${flat.length} רישומי עבודות</span><span>${workerIds.length} פועלים</span><span>${unique(flat.map(x=>x.item.location)).length} מיקומים</span></div><h3 class="report-subheading">סיכום לפי פועל</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>פועל</th><th>חברת כוח אדם</th><th>ימי שיבוץ</th><th>מיקומים / מלאכות</th></tr></thead><tbody>${summary.map(w=>`<tr><td>${esc(w.name)}</td><td>${esc(w.company)}</td><td>${w.days}</td><td>${w.entries}</td></tr>`).join('')}</tbody></table></div><h3 class="report-subheading">פירוט עבודה לפי יום ומיקום</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>תאריך</th><th>שם הפועל</th><th>חברת כוח אדם</th><th>מיקום עבודה</th><th>מלאכה</th><th>מנהל עבודה</th></tr></thead><tbody>${flat.map(({assignment:a,item})=>{const w=workerById(a.workerId);return `<tr><td>${shortDate(a.date)}</td><td>${esc(w.name)}</td><td>${esc(w.company)}</td><td>${esc(item.location)}</td><td>${esc(item.task)}</td><td>${esc(a.manager)}</td></tr>`;}).join('')}</tbody></table></div><p class="report-disclaimer">מספר ימי השיבוץ נספר לפי פועל ותאריך, גם אם בוצעו מספר מלאכות או עבודה במספר מיקומים באותו יום.</p>`;
+    const summary=workerIds.map(id=>{
+      const w=workerById(id),days=rows.filter(a=>a.workerId===id);
+      return {name:w.name,company:w.company,days:days.length,reported:days.filter(hasHours).length,minutes:sumMinutes(days),entries:allWorkRows(days).length};
+    }).sort((a,b)=>b.minutes-a.minutes||a.name.localeCompare(b.name,'he'));
+    const companies=unique(summary.map(x=>x.company)).map(company=>{
+      const workers=summary.filter(x=>x.company===company);
+      return {company,workers:workers.length,days:workers.reduce((n,x)=>n+x.days,0),reported:workers.reduce((n,x)=>n+x.reported,0),minutes:workers.reduce((n,x)=>n+x.minutes,0)};
+    });
+    const pending=rows.filter(a=>!hasHours(a)).length;
+    $('report-result').innerHTML=head+`
+      <div class="report-overview"><span>⏱️ <bdi>${formatHours(sumMinutes(rows))}</bdi> שעות שדווחו</span><span>${workerDayCount(rows)} ימי פועל</span><span>${pending} ימים ללא דיווח שעות</span><span>${workerIds.length} פועלים</span></div>
+      ${pending?`<p class="hours-notice">שימו לב: חסר דיווח שעות עבור ${pending} ימי פועל. הסיכומים כוללים רק שעות שהוזנו בפועל.</p>`:''}
+      <h3 class="report-subheading">סיכום שעות לפי פועל</h3>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>פועל</th><th>חברת כוח אדם</th><th>ימי שיבוץ</th><th>ימים עם שעות</th><th>סה״כ שעות</th></tr></thead><tbody>${summary.map(w=>`<tr><td>${esc(w.name)}</td><td>${esc(w.company)}</td><td>${w.days}</td><td>${w.reported}</td><td class="hours-cell"><bdi>${formatHours(w.minutes)}</bdi></td></tr>`).join('')}</tbody></table></div>
+      <h3 class="report-subheading">סיכום שעות לפי חברת כוח אדם</h3>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>חברה</th><th>מספר פועלים</th><th>ימי פועל</th><th>ימים עם שעות</th><th>סה״כ שעות</th></tr></thead><tbody>${companies.map(c=>`<tr><td>${esc(c.company)}</td><td>${c.workers}</td><td>${c.days}</td><td>${c.reported}</td><td class="hours-cell"><bdi>${formatHours(c.minutes)}</bdi></td></tr>`).join('')}</tbody></table></div>
+      <h3 class="report-subheading">פירוט שעות יומיות — שורה אחת לפועל ביום</h3>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>תאריך</th><th>שם הפועל</th><th>חברת כוח אדם</th><th>שעות ביום</th><th>מספר מיקומים / מלאכות</th></tr></thead><tbody>${rows.map(a=>{const w=workerById(a.workerId);return `<tr><td>${shortDate(a.date)}</td><td>${esc(w.name)}</td><td>${esc(w.company)}</td><td class="hours-cell">${hasHours(a)?`<bdi>${formatHours(dailyMinutes(a))}</bdi>`:'<span class="hours-pending">לא דווח</span>'}</td><td>${workItems(a).length}</td></tr>`;}).join('')}</tbody></table></div>
+      <h3 class="report-subheading">פירוט מיקומים ומלאכות שבוצעו</h3>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>תאריך</th><th>שם הפועל</th><th>חברת כוח אדם</th><th>מיקום עבודה</th><th>מלאכה</th><th>מנהל עבודה</th></tr></thead><tbody>${flat.map(({assignment:a,item})=>{const w=workerById(a.workerId);return `<tr><td>${shortDate(a.date)}</td><td>${esc(w.name)}</td><td>${esc(w.company)}</td><td>${esc(item.location)}</td><td>${esc(item.task)}</td><td>${esc(a.manager)}</td></tr>`;}).join('')}</tbody></table></div>
+      <p class="report-disclaimer">דיווח שעות הוא <strong>סך שעות יומי לפועל</strong>, ללא חלוקה בין מיקומים ומלאכות. ערך ״לא דווח״ אינו נחשב לאפס שעות; הוא מסמן דיווח חסר. סיכום השעות אינו חישוב שכר או אישור נוכחות.</p>`;
   }
   function downloadFile(name,blob){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+  function escapeCSV(v){
+    let value=String(v??'');
+    // Avoid Excel formula execution when opening CSV containing user-provided text.
+    if(/^\s*[=+@\-]/.test(value))value="'"+value;
+    return `"${value.replace(/"/g,'""')}"`;
+  }
+  function downloadCSV(filename,lines){
+    const csv='\uFEFF'+lines.map(row=>row.map(escapeCSV).join(',')).join('\r\n');
+    downloadFile(filename,new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  }
+  function exportHoursCSV(){
+    const rows=getReportRows();if(!rows)return;
+    const workerIds=unique(rows.map(a=>a.workerId));
+    const summary=workerIds.map(id=>{const w=workerById(id),days=rows.filter(a=>a.workerId===id);return {name:w.name,company:w.company,days:days.length,reported:days.filter(hasHours).length,minutes:sumMinutes(days)};}).sort((a,b)=>a.name.localeCompare(b.name,'he'));
+    const companies=unique(summary.map(x=>x.company)).map(company=>{const list=summary.filter(x=>x.company===company);return {company,workers:list.length,days:list.reduce((n,x)=>n+x.days,0),reported:list.reduce((n,x)=>n+x.reported,0),minutes:list.reduce((n,x)=>n+x.minutes,0)};});
+    const lines=[
+      ['סיכום שעות לפי פועל'],
+      ['שם הפועל','חברת כוח אדם','ימי שיבוץ','ימים עם דיווח שעות','סה״כ שעות (HH:MM)'],
+      ...summary.map(x=>[x.name,x.company,x.days,x.reported,formatHours(x.minutes)]),
+      [],['סיכום שעות לפי חברת כוח אדם'],
+      ['חברת כוח אדם','מספר פועלים','ימי שיבוץ','ימים עם דיווח שעות','סה״כ שעות (HH:MM)'],
+      ...companies.map(x=>[x.company,x.workers,x.days,x.reported,formatHours(x.minutes)]),
+      [],['סה״כ שעות שדווחו',formatHours(sumMinutes(rows))],
+      ['מספר ימי פועל ללא דיווח שעות',rows.filter(a=>!hasHours(a)).length],
+      [],['פירוט שעות יומי — שורה אחת לפועל ביום'],
+      ['תאריך','שם הפועל','חברת כוח אדם','שעות עבודה ביום (HH:MM)','דווחו שעות?','מספר רישומי מיקום/מלאכה']
+    ];
+    for(const a of rows){const w=workerById(a.workerId);lines.push([shortDate(a.date),w.name,w.company,hasHours(a)?formatHours(dailyMinutes(a)):'',hasHours(a)?'כן':'לא',workItems(a).length]);}
+    downloadCSV(`daily-hours-${$('report-from').value}-to-${$('report-to').value}.csv`,lines);
+    toast(`יוצא סיכום שעות לפי פועל וחברה ופירוט ${rows.length} ימי פועל`);
+  }
   function exportCSV(){
     const rows=getReportRows();if(!rows)return;
-    const details=allWorkRows(rows),heading=['תאריך','שם הפועל','חברת כוח אדם','מיקום עבודה','מלאכה','מנהל עבודה'];
-    const escapeCSV=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-    const lines=[heading,...details.map(({assignment:a,item})=>{const w=workerById(a.workerId);return [shortDate(a.date),w.name,w.company,item.location,item.task||'',a.manager||''];})].map(row=>row.map(escapeCSV).join(','));
-    const csv='\uFEFF'+lines.join('\r\n');
-    downloadFile(`daily-workers-${$('report-from').value}-to-${$('report-to').value}.csv`,new Blob([csv],{type:'text/csv;charset=utf-8'}));
-    toast(`יוצאו ${details.length} שורות עבודה (${workerDayCount(rows)} ימי פועל)`);
+    const details=allWorkRows(rows),lines=[['תאריך','שם הפועל','חברת כוח אדם','מיקום עבודה','מלאכה','מנהל עבודה']];
+    for(const {assignment:a,item} of details){const w=workerById(a.workerId);lines.push([shortDate(a.date),w.name,w.company,item.location,item.task||'',a.manager||'']);}
+    downloadCSV(`daily-work-details-${$('report-from').value}-to-${$('report-to').value}.csv`,lines);
+    toast(`יוצאו ${details.length} שורות פירוט עבודה`);
   }
-  function exportBackup(){const payload={app:'mordi-daily-workers',version:2,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
+  function exportBackup(){const payload={app:'mordi-daily-workers',version:3,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
   function validateBackup(raw) {
     if(!raw||raw.app!=='mordi-daily-workers'||!Array.isArray(raw.workers)||!Array.isArray(raw.assignments)||raw.workers.length>5000||raw.assignments.length>100000)throw new Error('קובץ גיבוי לא מתאים');
     const ids=new Set(),workers=raw.workers.map(w=>{
@@ -179,7 +247,10 @@
       if(items.length<1||items.length>200||items.some(x=>!x||typeof x.location!=='string'||!clean(x.location)||clean(x.location).length>160||clean(x.task).length>200))throw new Error('נתוני שיבוצים שגויים');
       aIds.add(a.id);
       const k=`${a.workerId}|${a.date}`;if(seen.has(k))throw new Error('יש שיבוצים כפולים באותו יום');seen.add(k);
-      return {id:a.id.slice(0,120),workerId:a.workerId,date:a.date,manager:clean(a.manager).slice(0,100),workItems:items.map(x=>({location:clean(x.location),task:clean(x.task)}))};
+      // Older backups have no daily total; keep it unreported instead of inventing zero.
+      const totalMinutes=a.totalMinutes===undefined||a.totalMinutes===null ? null : a.totalMinutes;
+      if(totalMinutes!==null&&(!Number.isInteger(totalMinutes)||totalMinutes<0||totalMinutes>1440))throw new Error('נתוני שעות שגויים');
+      return {id:a.id.slice(0,120),workerId:a.workerId,date:a.date,manager:clean(a.manager).slice(0,100),workItems:items.map(x=>({location:clean(x.location),task:clean(x.task)})),totalMinutes};
     });
     return {workers,assignments};
   }
@@ -201,8 +272,8 @@
     $('daily-search').oninput=renderDaily;$('daily-company-filter').onchange=renderDaily;
     $('worker-search').oninput=renderWorkers;$('workers-status-filter').onchange=renderWorkers;
     $('generate-report').onclick=renderReport;$('report-from').onchange=()=>{if(state.activeTab==='reports')renderReport();};$('report-to').onchange=()=>{if(state.activeTab==='reports')renderReport();};$('report-company').onchange=renderReport;
-    $('export-csv').onclick=exportCSV;$('export-backup').onclick=exportBackup;$('import-backup').onclick=()=>$('backup-file').click();$('backup-file').onchange=async e=>{const f=e.target.files?.[0];if(f)await importBackup(f);e.target.value='';};
-    document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return; if(el.id==='empty-new-worker')openWorker();if(el.id==='empty-new-assignment')openAssignment();if(el.id==='print-report')window.print();if(el.dataset.historyWorker)openHistory(el.dataset.historyWorker);if(el.dataset.historyDate){state.currentDate=el.dataset.historyDate;hideDialog('history-dialog');nav('daily');}if(el.dataset.editWorker)openWorker(el.dataset.editWorker);if(el.dataset.assignWorker){const w=workerById(el.dataset.assignWorker);if(w?.active===false){toast('יש להפוך את הפועל לפעיל כדי לשבץ אותו');return;}nav('daily');openAssignment(null,el.dataset.assignWorker);}if(el.dataset.addWorkAssignment)openAssignment(el.dataset.addWorkAssignment,null,true);if(el.dataset.editAssignment)openAssignment(el.dataset.editAssignment);if(el.dataset.deleteAssignment)deleteAssignment(el.dataset.deleteAssignment);});
+    $('export-csv').onclick=exportCSV;$('export-hours-csv').onclick=exportHoursCSV;$('export-backup').onclick=exportBackup;$('import-backup').onclick=()=>$('backup-file').click();$('backup-file').onchange=async e=>{const f=e.target.files?.[0];if(f)await importBackup(f);e.target.value='';};
+    document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return; if(el.id==='empty-new-worker'||el.id==='empty-new-worker-list')openWorker();if(el.id==='empty-new-assignment')openAssignment();if(el.id==='print-report')window.print();if(el.dataset.historyWorker)openHistory(el.dataset.historyWorker);if(el.dataset.historyDate){state.currentDate=el.dataset.historyDate;hideDialog('history-dialog');nav('daily');}if(el.dataset.editWorker)openWorker(el.dataset.editWorker);if(el.dataset.assignWorker){const w=workerById(el.dataset.assignWorker);if(w?.active===false){toast('יש להפוך את הפועל לפעיל כדי לשבץ אותו');return;}nav('daily');openAssignment(null,el.dataset.assignWorker);}if(el.dataset.addWorkAssignment)openAssignment(el.dataset.addWorkAssignment,null,true);if(el.dataset.editAssignment)openAssignment(el.dataset.editAssignment);if(el.dataset.hoursAssignment)openAssignment(el.dataset.hoursAssignment,null,false,true);if(el.dataset.deleteAssignment)deleteAssignment(el.dataset.deleteAssignment);});
     const onlineStatus=()=>{$('offline-indicator').classList.toggle('offline',!navigator.onLine);$('offline-indicator').title=navigator.onLine?'מחובר לרשת':'לא מחובר לרשת – האפליקציה עובדת גם ללא אינטרנט לאחר התקנה';};window.addEventListener('online',onlineStatus);window.addEventListener('offline',onlineStatus);onlineStatus();
   }
   async function init() {const now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);$('report-from').value=localISO(monthStart);$('report-to').value=localISO(now);$('daily-date').value=state.currentDate;try{db=await openDB();await load();bind();renderAll();if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);}catch(e){console.error(e);document.querySelector('.main-content').innerHTML='<div class="empty-state"><h2>לא ניתן לפתוח את מסד הנתונים</h2><p>בדוק שהגלישה אינה במצב פרטי ושהדפדפן מאפשר שמירת נתונים מקומית.</p></div>';}}

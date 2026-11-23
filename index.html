@@ -37,7 +37,7 @@
     <main class="main-content">
       <section class="panel active" id="panel-daily" aria-labelledby="daily-heading">
         <div class="section-heading">
-          <div><p class="eyebrow">יומן העבודה</p><h1 id="daily-heading">איפה כולם עובדים היום?</h1><p class="section-subtitle">שיבוץ בבוקר, ותיעוד כמה מיקומים ומלאכות שבוצעו בסוף היום.</p></div>
+          <div><p class="eyebrow">יומן העבודה</p><h1 id="daily-heading">איפה כולם עובדים היום?</h1><p class="section-subtitle">שיבוץ בבוקר, סך שעות יומי לפועל, ותיעוד המיקומים והמלאכות בסוף היום.</p></div>
         </div>
         <div class="date-control card-lite">
           <button type="button" id="previous-day" class="day-arrow" aria-label="יום קודם" title="יום קודם">›</button>
@@ -61,10 +61,10 @@
       </section>
 
       <section class="panel" id="panel-reports" aria-labelledby="reports-heading">
-        <div class="section-heading"><div><p class="eyebrow">סיכומים ונתונים</p><h1 id="reports-heading">דוחות וגיבוי</h1><p class="section-subtitle">ימי עבודה, מיקומים ומלאכות שבוצעו בתקופה שתבחר.</p></div></div>
+        <div class="section-heading"><div><p class="eyebrow">סיכומים ונתונים</p><h1 id="reports-heading">דוחות וגיבוי</h1><p class="section-subtitle">סיכום שעות לפי פועל וחברת כוח אדם, לצד פירוט העבודות בתקופה שתבחר.</p></div></div>
         <div class="report-filters card-lite"><label>מתאריך<input type="date" id="report-from"></label><label>עד תאריך<input type="date" id="report-to"></label><label>חברת כוח אדם<select id="report-company"><option value="">כל החברות</option></select></label><button type="button" class="button button-primary" id="generate-report">הצג דוח</button></div>
         <div id="report-result" class="report-result"></div>
-        <div class="tools-card"><div><h2>ייצוא ושמירת נתונים</h2><p>אפשר לשמור דוח Excel בפורמט CSV, או גיבוי מלא הכולל תמונות ונתוני שיבוץ.</p></div><div class="tool-buttons"><button id="export-csv" class="button button-quiet" type="button">ייצוא CSV לאקסל</button><button id="export-backup" class="button button-quiet" type="button">הורדת גיבוי מלא</button><button id="import-backup" class="button button-outline" type="button">שחזור מגיבוי</button><input id="backup-file" type="file" accept=".json,application/json" hidden></div></div>
+        <div class="tools-card"><div><h2>ייצוא ושמירת נתונים</h2><p>אפשר להוריד בנפרד דוח שעות יומיות ודוח פירוט עבודות בפורמט CSV לאקסל, או גיבוי מלא של הנתונים.</p></div><div class="tool-buttons"><button id="export-hours-csv" class="button button-primary" type="button">⏱️ ייצוא סיכום שעות לאקסל</button><button id="export-csv" class="button button-quiet" type="button">ייצוא פירוט עבודות לאקסל</button><button id="export-backup" class="button button-quiet" type="button">הורדת גיבוי מלא</button><button id="import-backup" class="button button-outline" type="button">שחזור מגיבוי</button><input id="backup-file" type="file" accept=".json,application/json" hidden></div></div>
         <div class="note"><strong>חשוב לדעת:</strong> המידע נשמר במכשיר ובדפדפן שבו אתה משתמש, ולא מסתנכרן בין טלפונים. מומלץ להוריד גיבוי באופן תקופתי. מחיקת נתוני הדפדפן עלולה למחוק את המידע.</div>
       </section>
     </main>
@@ -88,7 +88,12 @@
       <div class="dialog-top"><div><p class="eyebrow">יומן העבודה של הפועל</p><h2 id="assignment-dialog-title">שיבוץ פועל</h2></div><button type="button" class="close-button" data-close="assignment-dialog" aria-label="סגירה">×</button></div>
       <label class="form-field">תאריך <span class="required">*</span><input type="date" id="assignment-date" required></label>
       <label class="form-field">פועל <span class="required">*</span><select id="assignment-worker" required><option value="">בחר פועל</option></select></label>
-      <div class="workday-helper">אפשר לשבץ מיקום בבוקר, ובסיום היום להוסיף לכל פועל את כל המיקומים והמלאכות שביצע. כל יום נספר <strong>פעם אחת</strong> לכל פועל.</div>
+      <div class="workday-helper">אפשר לשבץ מיקום בבוקר, ובסיום היום להוסיף את כל העבודות שבוצעו. שעות העבודה נרשמות <strong>פעם אחת לכל פועל ביום</strong>, ללא חלוקה למיקומים או מלאכות.</div>
+      <div class="daily-hours-editor" id="daily-hours-editor">
+        <div class="daily-hours-heading"><span class="daily-hours-icon">⏱️</span><div><strong>סה״כ שעות עבודה ביום</strong><small>מזינים פעם אחת בסוף היום. לא לפי מיקום.</small></div></div>
+        <div class="daily-hours-inputs"><label class="form-field">שעות<input id="assignment-hours" type="number" inputmode="numeric" min="0" max="24" step="1" placeholder="למשל 8" aria-label="מספר שעות עבודה ביום"></label><label class="form-field">דקות<input id="assignment-minutes" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="למשל 30" aria-label="מספר דקות עבודה ביום"></label></div>
+        <p class="daily-hours-hint">דוגמה: 8 שעות ו-30 דקות. השאר את שני השדות ריקים אם עדיין אין דיווח.</p>
+      </div>
       <div class="work-items-heading"><strong>מיקומים ומלאכות ביום זה</strong><span id="work-items-count"></span></div>
       <div id="assignment-work-items" class="work-items-editor"></div>
       <datalist id="location-options"></datalist>
@@ -103,7 +108,7 @@
   </dialog>
 
   <dialog id="help-dialog" class="app-dialog help-dialog" aria-labelledby="help-dialog-title">
-    <div class="dialog-content"><div class="dialog-top"><h2 id="help-dialog-title">איך עובדים עם האפליקציה?</h2><button type="button" class="close-button" data-close="help-dialog" aria-label="סגירה">×</button></div><ol class="help-steps"><li>בלשונית <b>פועלים</b> מוסיפים את שמו, התמונה וחברת כוח האדם של כל פועל.</li><li>בלשונית <b>שיבוץ יומי</b> בוחרים תאריך ופועל ומזינים את המיקומים והמלאכות. אפשר להוסיף כמה שורות לאותו יום.</li><li>בסיום היום אפשר ללחוץ על "עריכת יום" ולהוסיף מיקומים או מלאכות. העתקה מאתמול מעתיקה מיקומים בלבד, בלי מלאכות.</li><li>בלשונית <b>דוחות וגיבוי</b> מפיקים דוח תקופתי ומורידים גיבוי של המידע.</li></ol><button class="button button-primary full-width" data-close="help-dialog">הבנתי</button></div>
+    <div class="dialog-content"><div class="dialog-top"><h2 id="help-dialog-title">איך עובדים עם האפליקציה?</h2><button type="button" class="close-button" data-close="help-dialog" aria-label="סגירה">×</button></div><ol class="help-steps"><li>בלשונית <b>פועלים</b> מוסיפים את שמו, התמונה וחברת כוח האדם של כל פועל.</li><li>בלשונית <b>שיבוץ יומי</b> בוחרים תאריך ופועל ומזינים את המיקומים והמלאכות. אפשר להוסיף כמה שורות לאותו יום.</li><li>בסיום היום אפשר ללחוץ על "דווח שעות", להזין סך שעות ודקות לכל פועל (בלי חלוקה בין המיקומים), וללחוץ על "עריכת יום" כדי להוסיף מיקומים או מלאכות. העתקה מאתמול מעתיקה מיקומים בלבד, בלי מלאכות.</li><li>בלשונית <b>דוחות וגיבוי</b> מפיקים סיכום שעות יומי, לפי פועל ולפי חברת כוח אדם, מייצאים לאקסל ומורידים גיבוי של המידע.</li></ol><button class="button button-primary full-width" data-close="help-dialog">הבנתי</button></div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js" defer></script>

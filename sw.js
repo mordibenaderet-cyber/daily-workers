@@ -1,4 +1,4 @@
-const CACHE='daily-workers-v2.0.0';
+const CACHE='daily-workers-v3.0.0';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-180.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('daily-workers-')&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});

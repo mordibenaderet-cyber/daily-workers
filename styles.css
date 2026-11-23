@@ -26,3 +26,26 @@
 .small-action.primary-action{background:#e8f6f3;color:#0d776e;border-color:#cce9e3}
 .report-disclaimer{font-size:12px;color:#71838a;line-height:1.6}
 @media(max-width:760px){.workday-card .card-actions{max-width:none;width:100%;border-top:1px solid #f0f3f3;padding-top:12px;justify-content:flex-start}.workday-card .assignment-main{flex:1 1 calc(100% - 70px)}.workday-card .card-actions .small-action{flex:1}}
+
+/* Daily hours are captured once per worker/day, independently of work items */
+.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.stat-card:nth-child(4) .stat-icon{background:#f9e7df}
+.day-hours{display:flex;gap:7px;align-items:center;margin-top:11px;border-radius:10px;width:fit-content;padding:7px 10px;font-size:12px;font-weight:650}
+.day-hours.hours-recorded{background:#e6f5ee;color:#17684d}
+.day-hours.hours-missing{background:#fff3e4;color:#94622e}
+.day-hours strong{font-weight:850;font-size:14px}
+.small-action.hours-action{color:#17684d;background:#ebf7f0;border-color:#c5e9d5}
+.daily-hours-editor{padding:15px;background:#f3f9f4;border:1px solid #cfe6d7;border-radius:14px;display:grid;gap:13px}
+.daily-hours-heading{display:flex;gap:10px;align-items:center}
+.daily-hours-icon{display:grid;place-items:center;background:#dff1e4;width:39px;height:39px;border-radius:11px;font-size:20px}
+.daily-hours-heading strong{display:block;font-size:15px;color:#27583e}
+.daily-hours-heading small{display:block;color:#628270;font-size:12px;margin-top:4px}
+.daily-hours-inputs{display:flex;gap:12px}
+.daily-hours-inputs .form-field{flex:1;min-width:0}
+.daily-hours-hint{color:#5a7a69;font-size:12px;margin:0;line-height:1.65}
+.hours-cell{font-weight:800;font-variant-numeric:tabular-nums;color:#256b50}
+.hours-pending{font-weight:600;color:#a27131}
+.history-row .history-hours{font-weight:700;color:#21694d}
+.hours-notice{padding:12px 14px;background:#fff7e8;border:1px solid #eedcb6;border-radius:12px;color:#875b28;font-size:13px;line-height:1.65}
+@media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat-card{min-height:76px}.workday-card .card-actions .small-action{flex:1 1 calc(50% - 6px)}}
+@media print{.hours-notice{color:#444;border:1px solid #ccc;background:#fff}}
