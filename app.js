@@ -14,9 +14,23 @@
   // End times earlier than start times are treated as next-day clock times.
   // Prior releases stored only totalMinutes; keep those totals until times are entered.
   const CLOCK_PATTERN=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
+  // Standard text inputs deliberately replace iOS's sometimes blank-looking native time picker.
+  // Accept 07:30, 7:30 or 0730, but always save HH:MM.
+  function normalizeClock(value) {
+    const raw=String(value??'').trim();
+    if(!raw)return '';
+    let h,m;
+    if(/^\d{1,2}:\d{2}$/.test(raw)) [h,m]=raw.split(':');
+    else if(/^\d{3,4}$/.test(raw)) {h=raw.slice(0,-2);m=raw.slice(-2);}
+    else return null;
+    const hour=Number(h),minute=Number(m);
+    if(hour>23||minute>59)return null;
+    return `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+  }
   function timeInterval(start,end) {
+    start=normalizeClock(start);end=normalizeClock(end);
     if(!start&&!end)return null;
-    if(!CLOCK_PATTERN.test(start)||!CLOCK_PATTERN.test(end))throw new Error('יש להזין שעת כניסה ושעת יציאה תקינות');
+    if(!CLOCK_PATTERN.test(start)||!CLOCK_PATTERN.test(end))throw new Error('יש להזין שעת כניסה ושעת יציאה תקינות בפורמט 07:00');
     const [sh,sm]=start.split(':').map(Number),[eh,em]=end.split(':').map(Number);
     const begin=sh*60+sm,finish=eh*60+em;
     if(begin===finish)throw new Error('שעת היציאה לא יכולה להיות זהה לשעת הכניסה');
@@ -51,7 +65,7 @@
   async function remove(table,id) { await tableOp(table,'readwrite',s=>s.delete(id)); await load(); renderAll(); }
   async function bulkInsert(table,items) { if (!items.length) return; await new Promise((resolve,reject)=>{const tx=db.transaction(table,'readwrite');const store=tx.objectStore(table);for(const item of items)store.put(item);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});await load();renderAll(); }
 
-  function nav(tab) { state.activeTab=tab; document.querySelectorAll('.tab').forEach(b=>{ const isActive=b.dataset.tab===tab; b.classList.toggle('active',isActive); if(isActive)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current'); }); document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===`panel-${tab}`)); renderAll(); }
+  function nav(tab) { state.activeTab=tab; document.querySelectorAll('.tab').forEach(b=>{ const isActive=b.dataset.tab===tab; b.classList.toggle('active',isActive); if(isActive)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current'); }); document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===`panel-${tab}`)); window.scrollTo({top:0,behavior:'instant'}); renderAll(); }
   function renderAll() { populateCompanies(); populateDatalists(); renderStats(); renderHoursBoard(); renderDaily(); renderWorkers(); if(state.activeTab==='reports')renderReport(); }
   function populateCompanies() { const companies=unique(state.workers.map(w=>w.company)); const selectors=[$('daily-company-filter'),$('report-company')]; selectors.forEach(s=>{const prev=s.value;s.innerHTML='<option value="">כל החברות</option>'+companies.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');s.value=companies.includes(prev)?prev:'';}); }
   function populateDatalists() { $('company-options').innerHTML=unique(state.workers.map(w=>w.company)).map(v=>`<option value="${esc(v)}"></option>`).join(''); $('location-options').innerHTML=unique(state.assignments.flatMap(a=>workItems(a).map(x=>x.location))).map(v=>`<option value="${esc(v)}"></option>`).join(''); }
@@ -70,6 +84,7 @@
     const values=[{v:active,l:'פועלים פעילים',i:'👷'},{v:items.length,l:'פועלים ששובצו',i:'📍'},{v:sites,l:'מיקומים רשומים',i:'🏗️'},{v:formatHours(sumMinutes(items)),l:'סה״כ שעות שדווחו',i:'⏱️'}];
     $('daily-stats').innerHTML=values.map(a=>`<div class="stat-card"><div class="stat-icon">${a.i}</div><div><div class="stat-value">${a.v}</div><div class="stat-label">${a.l}</div></div></div>`).join('');
     $('daily-date').value=state.currentDate;
+    $('hours-date').value=state.currentDate;
   }
   // Inline start/end clock editor for every worker on the selected date.
   function renderHoursBoard() {
@@ -85,8 +100,8 @@
       return `<form class="hours-board-row" data-quick-hours="${esc(a.id)}">
         <div class="hours-board-worker">${avatar(w,'hours-board-avatar')}<div class="hours-board-name"><strong>${esc(w.name)}</strong><small>${esc(w.company)}</small></div></div>
         <div class="hours-board-controls">
-          <label>שעת כניסה<input name="startTime" type="time" step="60" value="${esc(a.startTime||'')}" aria-label="שעת כניסה של ${esc(w.name)}" /></label>
-          <label>שעת יציאה<input name="endTime" type="time" step="60" value="${esc(a.endTime||'')}" aria-label="שעת יציאה של ${esc(w.name)}" /></label>
+          <label>שעת כניסה<input name="startTime" data-clock type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="07:00" dir="ltr" value="${esc(a.startTime||'')}" aria-label="שעת כניסה של ${esc(w.name)}" /></label>
+          <label>שעת יציאה<input name="endTime" data-clock type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="16:30" dir="ltr" value="${esc(a.endTime||'')}" aria-label="שעת יציאה של ${esc(w.name)}" /></label>
           <button class="button button-primary hours-board-save" type="submit">שמור שעות</button>
         </div>
         <div class="hours-board-status ${hasHours(a)?'is-complete':'is-missing'}">
@@ -105,7 +120,7 @@
     if(!start&&!end){result.textContent='הזן התחלה וסיום לחישוב';return;}
     try{
       const interval=timeInterval(start,end);
-      result.textContent=`סה״כ ${formatHours(interval.totalMinutes)}${interval.overnight?' (סיום למחרת)':''} · טרם נשמר`;
+      result.textContent=`סה״כ ${formatHours(interval.totalMinutes)} שעות${interval.overnight?' (סיום למחרת)':''} · טרם נשמר`;
     }catch(err){result.textContent=start&&end?err.message:'יש למלא גם שעת כניסה וגם שעת יציאה';}
   }
   async function saveQuickHours(e) {
@@ -216,7 +231,7 @@
         :'סך שעות עבודה: הזן שעת כניסה ויציאה לחישוב אוטומטי.';
       return;
     }
-    try{const interval=timeInterval(start,end);preview.textContent=`סך שעות עבודה: ${formatHours(interval.totalMinutes)} שעות${interval.overnight?' · שעת הסיום למחרת':''}`;}
+    try{const interval=timeInterval(start,end);preview.textContent=`סה״כ מחושב: ${formatHours(interval.totalMinutes)} שעות${interval.overnight?' · יציאה למחרת':''}`;}
     catch(err){preview.textContent=start&&end?err.message:'יש להזין גם שעת כניסה וגם שעת יציאה';}
   }
   async function saveAssignment(e) {
@@ -324,7 +339,7 @@
     downloadCSV(`daily-work-details-${$('report-from').value}-to-${$('report-to').value}.csv`,lines);
     toast(`יוצאו ${details.length} שורות פירוט עבודה`);
   }
-  function exportBackup(){const payload={app:'mordi-daily-workers',version:6,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
+  function exportBackup(){const payload={app:'mordi-daily-workers',version:7,exportedAt:new Date().toISOString(),workers:state.workers,assignments:state.assignments};downloadFile(`daily-workers-backup-${localISO(new Date())}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));toast('הגיבוי המלא ירד למכשיר');}
   function validateBackup(raw) {
     if(!raw||raw.app!=='mordi-daily-workers'||!Array.isArray(raw.workers)||!Array.isArray(raw.assignments)||raw.workers.length>5000||raw.assignments.length>100000)throw new Error('קובץ גיבוי לא מתאים');
     const ids=new Set(),workers=raw.workers.map(w=>{
@@ -351,6 +366,15 @@
   }
   async function importBackup(file){try{if(file.size>40*1024*1024)throw new Error('קובץ הגיבוי גדול מדי');const raw=JSON.parse(await file.text());const data=validateBackup(raw);if(!confirm(`לשחזר ${data.workers.length} פועלים ו-${data.assignments.length} שיבוצים?\n\nפעולה זו תחליף את כל המידע הנוכחי במכשיר. מומלץ להוריד קודם גיבוי.`))return;await new Promise((resolve,reject)=>{const tx=db.transaction(['workers','assignments'],'readwrite');const w=tx.objectStore('workers'),a=tx.objectStore('assignments');w.clear();a.clear();for(const row of data.workers)w.put(row);for(const row of data.assignments)a.put(row);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});await load();renderAll();toast('הגיבוי שוחזר בהצלחה');}catch(err){console.error(err);toast(err.message==='קובץ גיבוי לא מתאים'||err.message.includes('שגויים')||err.message.includes('כפולים')||err.message.includes('גדול מדי')?err.message:'לא ניתן לקרוא את קובץ הגיבוי');}}
 
+  function formatClockOnBlur(e) {
+    const input=e.target.closest('input[data-clock], #assignment-start-time, #assignment-end-time');
+    if(!input)return;
+    const result=normalizeClock(input.value);
+    if(result!==null&&result!=='')input.value=result;
+    if(input.closest('[data-quick-hours]'))updateHoursBoardPreview({target:input});
+    else updateAssignmentTimePreview();
+  }
+
   function bind() {
     document.querySelectorAll('.tab').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.tab)));
     document.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click',()=>hideDialog(el.dataset.close)));
@@ -360,10 +384,18 @@
     $('worker-photo').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{state.photoDraft=await makeSmallPhoto(file);renderPhotoPreview();}catch(err){console.error(err);toast('לא ניתן לטעון את התמונה. נסה תמונה אחרת.');}});
     $('remove-worker-photo').onclick=()=>{state.photoDraft=null;$('worker-photo').value='';renderPhotoPreview();};
     $('daily-date').addEventListener('change',e=>{if(isoDate(e.target.value)){state.currentDate=e.target.value;renderAll();}});
+    $('hours-date').addEventListener('change',e=>{if(isoDate(e.target.value)){state.currentDate=e.target.value;renderAll();}});
+    $('hours-previous-day').onclick=()=>{state.currentDate=addDays(state.currentDate,-1);renderAll();};
+    $('hours-next-day').onclick=()=>{state.currentDate=addDays(state.currentDate,1);renderAll();};
+    $('hours-go-today').onclick=()=>{state.currentDate=localISO(new Date());renderAll();};
+    $('go-hours').onclick=()=>nav('hours');
     $('previous-day').onclick=()=>{state.currentDate=addDays(state.currentDate,-1);renderAll();};$('next-day').onclick=()=>{state.currentDate=addDays(state.currentDate,1);renderAll();};$('go-today').onclick=()=>{state.currentDate=localISO(new Date());renderAll();};
     $('copy-previous').onclick=copyPrevious;
     $('hours-board-list').addEventListener('submit',saveQuickHours);
     $('hours-board-list').addEventListener('input',updateHoursBoardPreview);
+    $('hours-board-list').addEventListener('focusout',formatClockOnBlur);
+    $('assignment-start-time').addEventListener('blur',formatClockOnBlur);
+    $('assignment-end-time').addEventListener('blur',formatClockOnBlur);
     $('assignment-start-time').addEventListener('input',updateAssignmentTimePreview);
     $('assignment-end-time').addEventListener('input',updateAssignmentTimePreview);
     $('add-work-item').onclick=()=>appendWorkRow({},true);

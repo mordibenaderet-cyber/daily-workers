@@ -1,13 +1,13 @@
 {
-  "name": "ניהול יומיות – פועלים ושיבוצים",
+  "name": "ניהול יומיות – פועלים, עבודות ושעות",
   "short_name": "ניהול יומיות",
   "description": "ניהול פועלים ביומית ושיבוץ למיקומי עבודה לפי תאריך",
   "start_url": "./",
   "scope": "./",
   "id": "./",
   "display": "standalone",
-  "background_color": "#f3f6f7",
-  "theme_color": "#102f3d",
+  "background_color": "#f3f6f8",
+  "theme_color": "#0b2934",
   "lang": "he",
   "dir": "rtl",
   "icons": [
