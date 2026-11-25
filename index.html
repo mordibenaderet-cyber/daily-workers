@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icons/icon-180.png">
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=9.1.0">
+  <link rel="stylesheet" href="./styles.css?v=10.0.0">
   <title>יומן פועלים | ניהול יומיות</title>
 </head>
 <body>
@@ -21,12 +21,12 @@
       <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><rect x="5" y="5" width="22" height="22" rx="6" stroke="currentColor" stroke-width="2"/><path d="m10 16 4 4 8-9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6"/></svg></div>
       <div><span class="eyebrow">ניהול יומיות</span><h1>יומן פועלים</h1></div>
     </div>
-    <span class="version">גרסה 9 · SIMPLE</span>
+    <span class="version">גרסה 10 · SIMPLE</span>
   </header>
 
   <main class="main">
     <div class="heading-line">
-      <div><p class="eyebrow dark">נוכחות יומית</p><h2>מי הגיע ומתי?</h2><p class="subheading">כל הפועלים, בתצוגה אחת פשוטה.</p></div>
+      <div><p class="eyebrow dark">נוכחות יומית</p><h2>מי הגיע ומתי?</h2><p class="subheading">כל הפועלים, מקובצים לפי חברת כוח אדם.</p></div>
       <button id="add-worker" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> הוסף פועל</button>
     </div>
 
@@ -38,6 +38,7 @@
           <button id="next-date" class="icon-btn" type="button" aria-label="יום הבא" title="יום הבא">›</button>
           <button id="today" class="today-btn" type="button">היום</button>
         </div>
+        <div class="toolbar-actions"><button id="export-pdf" class="btn btn-pdf" type="button">דוח PDF</button>
         <div class="menu-area">
           <button id="menu-button" class="icon-btn dots" type="button" aria-label="אפשרויות נוספות" aria-expanded="false" aria-controls="menu-panel">⋯</button>
           <div id="menu-panel" class="menu-panel" hidden>
@@ -46,7 +47,7 @@
             <button id="backup" type="button">הורדת גיבוי</button>
             <button id="restore" type="button">שחזור גיבוי</button>
           </div>
-        </div>
+        </div></div>
       </div>
       <div class="table-frame">
         <table class="presence-table" aria-label="נוכחות פועלים לפי תאריך">
@@ -73,6 +74,9 @@
     <div class="photo-control"><div id="photo-preview" class="photo-preview" aria-label="תמונת העובד">👷</div><div><label for="worker-photo" class="photo-button">העלה תמונה</label><input id="worker-photo" type="file" accept="image/*" hidden><button id="remove-photo" class="text-btn" type="button" hidden>הסר תמונה</button><p class="helper">לא חובה. התמונה נשמרת במכשיר.</p></div></div>
     <label class="field-label" for="worker-name">שם הפועל</label>
     <input id="worker-name" class="text-input" name="name" autocomplete="off" placeholder="שם מלא" maxlength="100" required>
+    <label class="field-label company-label" for="worker-company">חברת כוח אדם</label>
+    <input id="worker-company" class="text-input" name="company" autocomplete="organization" list="company-options" placeholder="שם החברה" maxlength="100" required>
+    <datalist id="company-options"></datalist>
     <label id="active-row" class="checkbox-row" hidden><input id="worker-active" type="checkbox" checked> פועל פעיל (מוצג ברשימה)</label>
     <div class="dialog-actions"><button type="button" class="btn btn-ghost" data-close="worker-dialog">ביטול</button><button type="submit" class="btn btn-primary">שמור פועל</button></div>
   </form>
@@ -81,14 +85,24 @@
 <dialog id="manage-dialog" class="dialog">
   <div class="dialog-card">
     <div class="dialog-head"><div><p class="eyebrow dark">ניהול</p><h3>רשימת הפועלים</h3></div><button type="button" class="close-btn" data-close="manage-dialog" aria-label="סגירה">×</button></div>
-    <p class="helper">לחץ על פועל כדי לערוך את השם, התמונה או מצב הפעילות שלו. ימי עבודה ישנים נשמרים.</p>
+    <p class="helper">לחץ על פועל כדי לערוך את השם, חברת כוח האדם, התמונה או מצב הפעילות שלו. ימי עבודה ישנים נשמרים.</p>
     <div id="manage-list" class="manage-list"></div>
     <div class="dialog-actions"><button class="btn btn-ghost" type="button" data-close="manage-dialog">סגור</button><button id="manage-add" class="btn btn-primary" type="button">＋ פועל חדש</button></div>
   </div>
 </dialog>
 
+<dialog id="pdf-dialog" class="dialog">
+  <form id="pdf-form" class="dialog-card">
+    <div class="dialog-head"><div><p class="eyebrow dark">דוחות</p><h3>הפקת דוח PDF</h3></div><button type="button" class="close-btn" data-close="pdf-dialog" aria-label="סגירה">×</button></div>
+    <p class="helper pdf-helper">הדוח כולל פועל ותמונה, תאריך, שעת כניסה ושעת יציאה. הפועלים מקובצים לפי חברת כוח האדם שלהם.</p>
+    <div class="pdf-date-grid"><label><span class="field-label">מתאריך</span><input id="pdf-from" class="text-input pdf-date" type="date" required></label><label><span class="field-label">עד תאריך</span><input id="pdf-to" class="text-input pdf-date" type="date" required></label></div>
+    <div id="pdf-count" class="report-count" aria-live="polite"></div>
+    <div class="dialog-actions"><button type="button" class="btn btn-ghost" data-close="pdf-dialog">ביטול</button><button id="pdf-generate" type="submit" class="btn btn-primary">הורד PDF</button></div>
+  </form>
+</dialog>
 <input id="backup-file" type="file" accept="application/json,.json" hidden>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./app.js?v=9.1.0" defer></script>
+<script src="./pdf-export.js?v=10.0.0" defer></script>
+<script src="./app.js?v=10.0.0" defer></script>
 </body>
 </html>
